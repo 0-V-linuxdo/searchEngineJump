@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 20251107 v1.0.1
+// @name           searchEngineJump 搜索引擎快捷跳转 [20251107] v1.0.2
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
 // @version        5.26.7
 // @created        2011-07-02
 // @lastUpdated    2024-12-22
-// @update-log     1.0.0：适配 YouTube 新UI；1.0.1：适配 bilibili 所有搜索结果页；
+// @update-log     1.0.2：适配 Kagi 搜索
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -25,8 +25,8 @@
 // @grant       GM_registerMenuCommand
 // @grant       GM_openInTab
 // @grant       GM_xmlhttpRequest
-// @run-at      document-end
 
+// @run-at      document-end
 // ==/UserScript==
 
 (function () {
@@ -490,6 +490,140 @@
                     keyword: '//input[@name="q"]',
                     where: 'afterEnd',
                 },
+            },
+            {name: "Kagi搜索",
+                enabled: true,
+                url: /^https?:\/\/kagi\.com\/search/,
+                engineList: "web",
+                style: '\
+                    margin: 0;\
+                    padding: 0;\
+                    background: transparent;\
+                    border: none;\
+                    border-radius: 0;\
+                    box-shadow: none;\
+                    z-index: 100;\
+                ',
+                insertIntoDoc: {
+                    keyword: function () {
+                        var urlParams = new URLSearchParams(window.location.search);
+                        var query = urlParams.get('q');
+                        if (query) {
+                            return decodeURIComponent(query);
+                        }
+
+                        var searchInput = document.querySelector('input[name="q"]') ||
+                            document.querySelector('input[type="search"]') ||
+                            document.querySelector('.search-input');
+                        if (searchInput && searchInput.value) {
+                            return searchInput.value;
+                        }
+
+                        var title = document.title;
+                        var match = title.match(/^(.+?)\s*-\s*Kagi/);
+                        return match ? match[1] : '';
+                    },
+                    target: function () {
+                        var mainContent = document.querySelector('#main') ||
+                            document.querySelector('main') ||
+                            document.querySelector('._0_main-search-results') ||
+                            document.querySelector('.center-content-box');
+                        return mainContent;
+                    },
+                    where: 'afterBegin',
+                },
+                stylish: '\
+                    /* Kagi原生风格适配 - 紧凑版本 */\
+                    .sej-result {\
+                        display: flex;\
+                        flex-wrap: wrap;\
+                        gap: 8px;\
+                        margin: 0 0 12px 0;\
+                        padding: 8px 0;\
+                        border-bottom: 1px solid rgba(0,0,0,0.08);\
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\
+                    }\
+                    \
+                    .sej-result a {\
+                        display: inline-flex;\
+                        align-items: center;\
+                        padding: 6px 12px;\
+                        margin: 0;\
+                        background: rgba(0,0,0,0.02);\
+                        border: 1px solid rgba(0,0,0,0.08);\
+                        border-radius: 6px;\
+                        color: #0066cc !important;\
+                        text-decoration: none;\
+                        font-size: 13px;\
+                        font-weight: 500;\
+                        transition: all 0.15s ease;\
+                        gap: 6px;\
+                    }\
+                    \
+                    .sej-result a:hover {\
+                        background: rgba(0,102,204,0.08);\
+                        border-color: rgba(0,102,204,0.2);\
+                        transform: translateY(-1px);\
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);\
+                    }\
+                    \
+                    .sej-result img {\
+                        width: 14px;\
+                        height: 14px;\
+                        margin: 0;\
+                        opacity: 0.8;\
+                    }\
+                    \
+                    /* 深色主题适配 */\
+                    @media (prefers-color-scheme: dark) {\
+                        .sej-result {\
+                            border-bottom-color: rgba(255,255,255,0.1);\
+                        }\
+                        \
+                        .sej-result a {\
+                            background: rgba(255,255,255,0.05);\
+                            border-color: rgba(255,255,255,0.1);\
+                            color: #4d9eff !important;\
+                        }\
+                        \
+                        .sej-result a:hover {\
+                            background: rgba(77,158,255,0.15);\
+                            border-color: rgba(77,158,255,0.3);\
+                        }\
+                    }\
+                    \
+                    /* 确保在Kagi页面中正确显示 */\
+                    [data-theme="dark"] .sej-result,\
+                    .dark .sej-result {\
+                        border-bottom-color: rgba(255,255,255,0.1);\
+                    }\
+                    \
+                    [data-theme="dark"] .sej-result a,\
+                    .dark .sej-result a {\
+                        background: rgba(255,255,255,0.05);\
+                        border-color: rgba(255,255,255,0.1);\
+                        color: #4d9eff !important;\
+                    }\
+                    \
+                    [data-theme="dark"] .sej-result a:hover,\
+                    .dark .sej-result a:hover {\
+                        background: rgba(77,158,255,0.15);\
+                        border-color: rgba(77,158,255,0.3);\
+                    }\
+                    \
+                    /* 响应式设计 */\
+                    @media (max-width: 768px) {\
+                        .sej-result {\
+                            padding: 6px 0;\
+                            margin: 0 0 8px 0;\
+                        }\
+                        \
+                        .sej-result a {\
+                            font-size: 12px;\
+                            padding: 5px 10px;\
+                        }\
+                    }\
+                '
             },
 
             // 知识
