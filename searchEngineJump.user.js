@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转
+// @name           searchEngineJump 搜索引擎快捷跳转 20251107 v1.0.1
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
 // @version        5.26.7
 // @created        2011-07-02
 // @lastUpdated    2024-12-22
+// @update-log     1.0.0：适配 YouTube 新UI；1.0.1：适配 bilibili 所有搜索结果页；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -13,8 +14,8 @@
 // @icon           data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFSElEQVR4nMWXX4hdVxXGf2vfe89kJg61ia0DYzMTMWnoQ0FJtKmtJsFixT8DBSmYtGMLgq0PCqMEKwmxYzSGyUPBB7XRNi0FC6JtwYovgcS0klJD8SHakoExYhLQFkwn9/aeOfv7fDi3SStJ5o4muN4O7L32b33rz94H/s8WS10cvR3yVQaY++wnkESkwDK2sMy1EwXDtzRRziBhu+dGDG48smSA5kUP//wmAFIkrNwiGMOsBzYAQwTzEEeBY8BJO1fYtF+4laGPv/i/Afz1C1sAYwngZiKmsDcDI0DrHUtL4DRwMGAmUnVcCtpHPsrQbS/1DZDe+VFHblKziIjYBjwD3Iu5ARBwBjgJnAkwMAa+z+ZZqXEX8VZg0T784aUDzH3uk0DtVQvlVsMjwGpMB3gauAu8ieB2YDPwxR5gF/gQ+MeoNUFzACI4d+imvgDOp0BVRWo2AW62eRi8wvY/wNtrgGhDL+7a/gIcBLYBu4HrsPdSzr8K/JlcLk2BaCQstSxN2VptuYO93an7WES0UyORGg1Wfu0QKivyQhfb56yhn4B3Ynew1kD1oDTfJF20vi8NYBvjMVubbWHrOdtPhwaAYPVvfs8Hf1u32bJbDtXVbgFvAj4AOgTGzhPhGMdV/wCvbtmAJSyttzRiuWv7CdttAlY/f/iimwdvfQGiAfmtczg/jnOJ8/txtRbnvgAu6FSPtg1AC3wGPAvgWGRYqiSowLwC1Ru4GoFyFPc3ZM8DfGPLB1jZXlhe74sS6AAc+O6vL+tg6LaX2LP/SSA6tkpcYeee36/0D/C7Ve9BwZs97iLMEMDAE5N07z1wSQebvl/y3KkAGDIUsrHpRp8ACeDGw38kZdPMPtrILhvZ1yZ5TZJxvnwuW40GzSSaDa1vJq1oJXVbKZ9qpv5qoO6Cqr5ULB+zfNrygOX7LS+PlCgeu+eimz/1w0yWaTTScIqYTEERcDoiXovFauddAAA22CeRDyKD/Bnkbd32PNgUj09S/GwrUMt+x14hiWVFI1LEVyPidggi4hfOnuv3nr8AEGC5sj1j+4TtAcu7i4HlDwLLqRawMmtmnidn6JYLGIa7C/mbwHeAgYATQexPjVCVxcZd7SUACDCEfRyznXoMr8Sawf4lcDdwI7AKWAdss/0r2dOyr6kFpCn7hiyPRlDY5mM7z10W4F1KFT+/p6ZwDkgT2HuN19Tz3yXWG+NnJ8uR9h0FSStSRAFBwAmbpu3xbP/T9rzkp2zvtt2RzcvfG15EAaC8/8m6FkgmpWdsTyD/COtv9esnj1haZXvEtiXP2d5jc6es+3qHv8/2uO1v2d4hedA2H/n2vxZX4LwS+78E1PcDqprAOPZao9Gxs5PNkc6dXUKnIuI1Z8+lRijLo8AR2+OWqeeBS8n7bE8bd2x4Zc97FwcAaP307vqyiXi7QzBi7OyXGel8GkJEBAFUWUREIXlnL/LCvgBheZ9h2lLHyvxp5rrFAZZiG3e16zliBm3vsD0lu6i5ja0awppWrjrKmeOPjAL/UQP/rf1h11BPJHckT/dkL+vDjeXC0pRy3qGcB22x9oHZKwcAcPTh5UimzrWnexGXlrCFlAvlakq5eiiX3eLtSXnFAABe3j1c/0PgTp1z77NUKmesjHMulKuttq9X/eq+sgAAx35wTZ0OqWNrWqr2KVelqoqcF3DOL1r5dStfHQCoW03K9ApuWrnam/PCnHN+StZDRHSK1jLgCnXBpeymr/8dS+SFbmH7eiu/TkQnNRrkqmL20XVXFwBg7QOzRASSsDJFaxndssPso+uu9tH92b8BowSyPc/iZtEAAAAASUVORK5CYII=
 // @license        MIT
 
-// @match        *://**/*
-// @exclude         *://mega.nz/*
+// @match          *://**/*
+// @exclude        *://mega.nz/*
 
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -32,6 +33,83 @@
     'use strict';
 
     console.log("脚本: 搜索引擎快捷跳转 --- 开始执行 --- 发布者: qxin --- GitHub:https://github.com/qxinGitHub/searchEngineJump ← 问题反馈地址")
+
+    // 兼容强制 TrustedHTML 的站点（例如新版 YouTube），确保仍可渲染脚本 UI
+    setupTrustedHTMLSupport();
+
+    function setupTrustedHTMLSupport() {
+        if (typeof window === 'undefined' || window.__searchEngineJumpTrustedHTMLReady) {
+            return;
+        }
+        if (!window.trustedTypes || typeof window.trustedTypes.createPolicy !== 'function') {
+            return;
+        }
+
+        var policyOptions = {
+            createHTML: function (input) {
+                return input;
+            },
+            createScript: function (input) {
+                return input;
+            },
+            createScriptURL: function (input) {
+                return input;
+            }
+        };
+        var candidateNames = ['searchEngineJumpPolicy', 'searchEngineJump', 'default'];
+        var policy = null;
+
+        for (var i = 0; i < candidateNames.length; i++) {
+            try {
+                policy = window.trustedTypes.createPolicy(candidateNames[i], policyOptions);
+                if (policy) {
+                    break;
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+
+        if (!policy) {
+            return;
+        }
+
+        window.__searchEngineJumpTrustedHTMLReady = true;
+        window.__searchEngineJumpTrustedHTMLPolicy = policy;
+
+        var descriptor;
+        try {
+            descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+        } catch (error) {
+            descriptor = null;
+        }
+
+        if (descriptor && descriptor.set && descriptor.configurable !== false) {
+            Object.defineProperty(Element.prototype, 'innerHTML', {
+                configurable: descriptor.configurable,
+                enumerable: descriptor.enumerable,
+                get: descriptor.get,
+                set: function (value) {
+                    if (typeof value === 'string' || value instanceof String) {
+                        descriptor.set.call(this, policy.createHTML(value.toString()));
+                    } else {
+                        descriptor.set.call(this, value);
+                    }
+                }
+            });
+        }
+
+        var originalInsertAdjacentHTML = Element.prototype.insertAdjacentHTML;
+        if (originalInsertAdjacentHTML) {
+            Element.prototype.insertAdjacentHTML = function (position, html) {
+                if (typeof html === 'string' || html instanceof String) {
+                    return originalInsertAdjacentHTML.call(this, position, policy.createHTML(html.toString()));
+                }
+                return originalInsertAdjacentHTML.call(this, position, html);
+            };
+        }
+    }
+
     function iqxinstart(){
         // 根据规则把搜索引擎列表插入到指定网站
         var rules = [
@@ -45,12 +123,12 @@
                 // ['web'|'music'|'video'|'image'|'download'|'shopping'|'translate'|'knowledge'|'sociality']
                 engineList: 'web',
                 // 添加一个class, 用来使用目标网站的样式
-                class: "s6JM6d",  
+                class: "s6JM6d",
                 // 若固定到顶栏,是否给一个高度
                 fixedTop: 52,
                 // 固定到顶栏, 兼容ac百度用
                 // fixedTop2:88,
-                //  给引擎列表的样式 
+                //  给引擎列表的样式
                 style: '\
                     z-index: 100;\
                     margin-top:5px;\
@@ -669,7 +747,7 @@
                 },
             },
             {name: "哔哩哔哩",
-                url: /^https?:\/\/search\.bilibili\.com\/all/,
+                url: /^https?:\/\/search\.bilibili\.com\/(all|video|bangumi|pgc|live|article|upuser)(?:\/|$|\?)/,
                 enabled: true,
                 engineList: "video",
                 // fixedTop:62,
@@ -717,7 +795,7 @@
                 },
             },
             {name: "YouTube",
-                url: /^https?:\/\/www\.youtube\.com\/results/,
+                url: /^https?:\/\/www\.youtube\.com(?:(?:\/(?!embed\/).*)|(?:[?#].*))?$/,
                 enabled: true,
                 engineList: "video",
                 fixedTop:56,
@@ -729,7 +807,14 @@
                     backgroud:#fff;\
                 ",
                 insertIntoDoc: {
-                    keyword: 'css;input#search',
+                    keyword: function () {
+                        var input = document.querySelector('input#search') ||
+                            document.querySelector('form#search-form input') ||
+                            document.querySelector('ytd-searchbox input') ||
+                            document.querySelector('input#masthead-search-term') ||
+                            document.querySelector('input[name="search_query"]');
+                        return input ? input.value : '';
+                    },
                     target: 'css;#page-manager',
                     where: 'beforeBegin',
                 },
@@ -892,7 +977,7 @@
                 enabled: true,
                 engineList: "image",
                 fixedTop:70,  //关闭关联联想的情况下
-                // fixedTop:135,  // 
+                // fixedTop:135,  //
                 style: '\
                     margin-left:127px;\
                     ',
@@ -1638,7 +1723,7 @@
                }
             },
             {
-                name: "抖音搜索",   
+                name: "抖音搜索",
                 url:/^https?:\/\/www\.douyin\.com\/search/,
                 engineList:"web",
                 enabled:true,
@@ -1731,7 +1816,7 @@
                 }
             }
         ];
-        
+
         // 有些图标需要重复使用
         var icon ={};
         icon = {
@@ -2611,7 +2696,7 @@
                 //         getSettingData.engineList["translate"].push(engineList.translate[8])
                 //     }
                 // }
-                // 4.04 更改 b站图标  
+                // 4.04 更改 b站图标
                     // 导致了5.23.7 的严重bug, 致使无法使用。原因是用户已经删除了相关列表, 但是脚本依旧去读取,出现了读取错误。
                 // if(getSettingData.modifySearchItems){
                 //     getSettingData.engineList.video = modifySearchItemsIcon(getSettingData.engineList.video,"http://search.bilibili.com/all?keyword=%s",engineList.video[1].favicon)
@@ -2921,7 +3006,7 @@
             // if (!target || target.className.indexOf('sej-engine') == -1) return;
             // 某些网站致下方的this无法达到原本的效果, 例 https://origenapellido.com/apellido-gavira/
             // if (!target || !this.contains(target)) return;
-            if (!target) return;  
+            if (!target) return;
 
             var value;
             if (typeof iInput == 'function') {
@@ -3049,9 +3134,9 @@
                     sejContainer.style.top = "-50px";
                 }
                 return;
-            }; 
+            };
 
-            // if(document.activeElement.tagName.toUpperCase() == "INPUT" 
+            // if(document.activeElement.tagName.toUpperCase() == "INPUT"
             // || document.activeElement.tagName.toUpperCase() == "TEXTAREA") return;   // 排除inpu和textarea内的文本
 
             iTarget = document.body;
@@ -3063,7 +3148,7 @@
                 return;
             };
             selectSearchMode = true;
-            
+
             addSEJ()
         }
 
@@ -3079,7 +3164,7 @@
         // iframe 禁止加载
         if (window.self != window.top) return;
 
-        // 准备往页面插入列表 
+        // 准备往页面插入列表
         var url = location.href;
         var matchedRule;
         var marchedSign;
@@ -3335,7 +3420,7 @@
             //     `
             // }
             GM_addStyle(styleText);
-                
+
             // 夜间模式
             let scheme = document.getElementsByTagName('meta')['color-scheme']
             if(scheme){
@@ -3345,7 +3430,7 @@
                     document.body.setAttribute("qxintheme","dark")
                 }
             }
-    
+
             // 列表对象
             function DropDownList(a, list) {
                 this.a = a;
@@ -3353,45 +3438,45 @@
                 this.init();
             };
             DropDownList.zIndex = 100000000;
-    
+
             DropDownList.prototype = {
                 hidden: true,
                 showDelay: 233,
                 hideDelay: 233,
                 aShownClass: 'sej-drop-list-trigger-shown',
-    
+
                 init: function () {
                     var a = this.a;
                     var list = this.list;
-    
+
                     var self = this;
-    
+
                     // 关闭动画
                     if(!getSettingData.transtion){
                         this.showDelay = 0;
                         this.hideDelay = 0;
                     }
-    
+
                     // 进入显示
                     mouseEventListener.add('mouseenter', a, function () {
                         clearTimeout(self.hideTimerId);
-                        
+
                         if (self.hidden) {
                             self.showTimerId = setTimeout(function () {
                                 self.show();
                             }, self.showDelay);
                         } else {
-                            var style = list.style; 
+                            var style = list.style;
                             style.top = parseInt(list.style.top) -6 +"px";
                             style.zIndex = DropDownList.zIndex ++;
                             style.opacity = 0.96;
                         };
                     });
-    
+
                     // 离开隐藏
                     mouseEventListener.add('mouseleave', a, function () {
                         clearTimeout(self.showTimerId);
-                        
+
                         if (!self.hidden) {
                             list.style.top = parseInt(list.style.top)+6 +"px";
                             list.style.opacity = 0.04;
@@ -3400,18 +3485,18 @@
                             }, self.hideDelay);
                         };
                     });
-    
+
                     mouseEventListener.add('mouseenter', list, function () {
                         clearTimeout(self.hideTimerId);
-                        
+
                         var style = list.style;
                         style.zIndex = DropDownList.zIndex ++;
                         style.opacity = 0.96;
                         style.top = parseInt(list.style.top) -6 +"px";
                     });
-    
+
                     mouseEventListener.add('mouseleave', list, function () {
-    
+
                         list.style.opacity = 0.04;
                         list.style.top = parseInt(list.style.top)+6 +"px";
                         self.hideTimerId = setTimeout(function () {
@@ -3422,16 +3507,16 @@
                 show: function () {
                     if (!this.hidden) return;
                     this.hidden = false;
-    
+
                     var scrolled = getScrolled();
                     var aBCRect = this.a.getBoundingClientRect();
                     var thisBCRect = this.a.parentNode.getBoundingClientRect()
-    
+
                     var style = this.list.style;
-    
+
                     var top = scrolled.y + aBCRect.bottom;
                     var left = scrolled.x + aBCRect.left;
-    
+
                     // 百度界面二级搜索会出现偏移的问题
                     // if(/^https?:\/\/www\.baidu\.com\/(?:s|baidu)/.test(url)){
                     //     top = 26;
@@ -3443,37 +3528,37 @@
                     //         left += -134;
                     //     }
                     // }
-    
+
                     style.top = top + 6 + 'px';
                     style.left = left + 'px';
-    
+
                     style.zIndex = DropDownList.zIndex --;
                     style.display = 'block';
                     // 二级搜索居中显示
                     style.left = left- (this.list.getBoundingClientRect().width - aBCRect.width)/2 + "px";
-    
+
                     setTimeout(function () {
                         style.opacity = 0.96;
                         style.top = top + 'px';
                     }, 30);
                     this.a.classList.add(this.aShownClass);
-    
+
                 },
                 hide: function () {
                     if (this.hidden) return;
                     this.hidden = true;
-    
+
                     var style = this.list.style;
                     style.display = 'none';
                     style.opacity = 0.1;
-    
+
                     this.a.classList.remove(this.aShownClass);
-    
+
                 }
             };
-    
+
             // var pageEncoding = (document.characterSet || document.charset).toLowerCase();
-    
+
             // 创建dom
             var container = document.createElement('sejspan');
             container.id = 'sej-container';
@@ -3483,14 +3568,14 @@
             if(!matchedRule){
                 container.classList.add("selectSearch");
             }
-    
+
             // 添加 class 以获取目标网站相同的样式。
             if(matchedRule?.class){
                 container.className = container.className + " " + matchedRule.class;
             }
-            
+
             container.addEventListener('mousedown', mousedownhandler, true);
-            
+
             var aPattern = '<a href="" class="sej-engine" target="$blank$" data-iqxincategory="$category$" encoding="$encoding$" gbk="$gbk$" url="$url$"><img src="$favicon$" class="sej-engine-icon" />$name$</a>';
             var dropLists = [];
             engineList.details.forEach(function (item) {
@@ -3498,19 +3583,19 @@
                 var category = item[1];   // "web"
                 var cName = item[0];    // "网页"
                 var engines = [];
-    
+
                 engineList[category].forEach(function (engine) {
                     if(engine.disable) return;
-    
+
                     var engineUrl = engine.url;
-    
+
                     if (getSettingData.HideTheSameLink && matchedRule?.url.test(engineUrl)) return;// 去掉跳转到当前引擎的引擎
-    
+
                     var a = aPattern.replace('$encoding$', (engine.encoding || 'utf-8').toLowerCase())
                         .replace('$url$', engineUrl)
                         .replace('$name$', engine.name)
                         .replace("$category$",category);
-    
+
                     // 图标
                     if (engine.favicon) {
                         a = a.replace('$favicon$', engine.favicon);
@@ -3529,14 +3614,14 @@
                     } else {
                         a = a.replace('target="$blank$"', '');
                     };
-    
+
                     engines.push(a);
                 });
                 // 非空列表
                 if (!engines.length) return;
-    
+
                 engines = engines.join('');
-    
+
                 // 展开当前搜索分类列表
                 if (!getSettingData.foldlist && category == matchedRule?.engineList) {
                     container.innerHTML = engines;
@@ -3544,46 +3629,46 @@
                     var dropList = document.createElement('sejspan');
                     dropList.className = 'sej-drop-list rwl-exempt';
                     dropList.innerHTML = engines;
-    
+
                     //  a:主搜索菜单
                     // dropList: 搜索子菜单
                     var a = dropList.firstElementChild.cloneNode(true);
                     a.className = a.className + ' sej-drop-list-trigger';
-                    
+
                     // 隐藏主搜索菜单的图标
                     if(!getSettingData.icon){
                         cName = "";
                     }
-    
+
                     a.lastChild.nodeValue = cName;
                     dropLists.push([a, dropList]);
                 };
             });
-    
+
             //将各个搜索列表插入文档中
             dropLists.forEach(function (item) {
-    
+
                 // console.log(item[0]);
                 // console.log(item[0].dataset.iqxincategory)    //"web"
                 // console.log(item[0].querySelector("img").src);   // 图片链接
                 // console.log(item[0].innerText);  // 网页
                 // console.log(item[1]);
-    
+
                 if(getSettingData.icon == 2){
                     // console.log(icon[item[0].dataset.iqxincategory])
                     if(icon[item[0].dataset.iqxincategory]){
                         item[0].querySelector("img").src = icon[item[0].dataset.iqxincategory]
-    
+
                     }
                 }
-    
+
                 container.appendChild(item[0]);    //将搜索列表放入主搜索
                 document.body.appendChild(item[1]);  // 插入搜索子菜单
                 item[1].addEventListener('mousedown', mousedownhandler, true);
-    
+
                 new DropDownList(item[0], item[1]);
             });
-    
+
             // 将主搜索插入网页中
             switch (iTargetWhere) {
                 case 'beforebegin' :    // 'beforeBegin'(插入到给定元素的前面) ;
@@ -3610,7 +3695,7 @@
                     iTarget.appendChild(container);
                     break;
             };
-    
+
             // 兼容其他修改网页的脚本
             if (matchedRule?.style) {
                 // 判断是否存在脚本 “AC-baidu:重定向优化百度搜狗谷歌搜索_去广告_favicon_双列”
@@ -3636,7 +3721,7 @@
                 }
                 container.style.cssText = matchedRule.style;
             };
-    
+
             //兼容ac百度中lite选项, fixedtop和正常的不一样
             setTimeout(function(){
                 if(document.querySelector(".AC-baiduLiteStyle") && matchedRule.fixedTop2){
@@ -3646,11 +3731,11 @@
                     console.log("没找到 AC-baiduLiteStyle")
                 }
             },2500)
-    
-                    
+
+
             // 由于与要插入网页的样式无法很好的兼容,更改源网页的样式
             if(matchedRule?.stylish){GM_addStyle(matchedRule.stylish);};
-            
+
             //固定搜索栏
             if(getSettingData.fixedTop && matchedRule){
                 // 判断是否需要只在向上滚动时显示
@@ -3673,28 +3758,28 @@
                     return true;
                 };
             };
-    
+
             // 固定搜索栏
             function fixedTopFun(height, color){
                 var obj = document.getElementById("sej-container");
                 if(!obj){return};
                 var objTop = obj.offsetTop ;
                 var objLeft = obj.offsetLeft ;
-    
+
                 var current = obj.offsetParent;
                 while (current !== null){
                     objLeft += current.offsetLeft;
                     current = current.offsetParent;
                 }
-    
+
                 var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    
+
                 if(height){
                     objTop = height;
                 }else{
                     height = 0;
                 }
-    
+
                 if(scrollTop <= objTop){
                     obj.style.cssText = matchedRule.style;
                 }else if(obj.style.position!="fixed"){
@@ -3705,9 +3790,9 @@
                     var marginLeft = parseInt(objstyle.marginLeft);
                     var marginRight = parseInt(objstyle.marginRight);
                     //console.log(objLeft,marginLeft);
-    
+
                     obj.style.top = height - marginTop + 'px';
-    
+
                     // 如果之前未设置颜色,则默认设置为白色
                         // 2020-12-19 增加选项,可以通过代码自定义颜色,但是无法通过网站自动获取
                     if(color){
@@ -3717,7 +3802,7 @@
                     }
                     obj.style.left = getElementLeft(obj) - marginLeft + "px";
                     // obj.style.left = getElementLeft(obj) + "px";
-                    
+
                     debug("objLeft: ",objLeft,"marginLeft: ",marginLeft,"marginRight: ",marginRight,"getElementLeft: ",getElementLeft(obj));
                     // 知乎等网站的情况 利用 margin 居中
                     if(marginRight === marginLeft && marginRight != 0){
@@ -3728,9 +3813,9 @@
                         obj.style.width = objstyle.width;
                     }
                     obj.style.position = 'fixed';
-    
+
                     obj.style.padding = "0px 5px 0px 0px";  // 重置padding, 因为用了 fixed 定位, 没必要继续用padding,反而会带来遮挡
-    
+
                     // if(document.querySelectorAll("input[name='sp-ac-a_force_style_baidu']").length !=0){
                     //     console.log("检测到 ac脚本单列居中选项")
                     //     if((document.querySelectorAll("input[name='sp-ac-a_force_style_baidu']")[2].checked)){
@@ -3746,13 +3831,13 @@
             }
             function fixedTopFun2(Target,where){
                 var obj = document.getElementById("sej-container");
-                
+
                 var oTarget = getElement(Target)
-    
+
                 console.log("fixedTopFun2");
                 console.log(Target);
                 console.log(where);
-                
+
                 switch (where.toLowerCase()) {
                     case 'beforebegin' :    // 'beforeBegin'(插入到给定元素的前面) ;
                     oTarget.parentNode.insertBefore(obj, oTarget);
@@ -4352,10 +4437,10 @@
                     <span>标&nbsp;&nbsp;&nbsp&nbsp&nbsp&nbsp&nbsp题 : </span><input id="iqxin-newTitle" placeholder="必填" onfocus="this.select()" value="${otitle}" /> <br/><br/>
                     <span>链&nbsp;&nbsp;&nbsp&nbsp&nbsp&nbsp&nbsp接 : </span><input id="iqxin-newLink" placeholder="必填" onfocus="this.select()" value="${olink }" /> <br/><br/>
                     <span>图&nbsp;&nbsp;&nbsp&nbsp&nbsp&nbsp&nbsp标 : </span><input id="iqxin-newIcon" placeholder="选填,留空则自动获取" onfocus="this.select()" value="${oicon }" /> <br/><br/>
-                    <span>打开方式 : 
-                        <select id="iqxin-newTarget" style="border-radius: 4px;border: none;padding: 2px 0 2px 2px"> 
+                    <span>打开方式 :
+                        <select id="iqxin-newTarget" style="border-radius: 4px;border: none;padding: 2px 0 2px 2px">
                             ${strblank}
-                        <select> 
+                        <select>
                     </span>
                     <br/><br/>
                     <span style=""><label>GBK编码：<input type="checkbox" name="" id="iqxin-newGBK" ${strGBK} style="vertical-align:middle;"></label></span>
@@ -5444,8 +5529,8 @@
                 style.type = 'text/css';
                 style.innerHTML = css;
                 head.appendChild(style);
-                
-                // 关闭设置菜单中的所有动画效果 
+
+                // 关闭设置菜单中的所有动画效果
                 if(!getSettingData.transtion){
                     GM_addStyle("#settingLayer," +
                         "#btnEle span," +
@@ -5592,7 +5677,7 @@
         return ~url.search(element);
     });
 
-    
+
     // if (hashListTag){
     //     var oldTitle = document.title;
     //     var newTitle = "";
@@ -5610,7 +5695,7 @@
     //             iqxinstart();
     //         }
     //     },1000)
-    // } else 
+    // } else
     if (delayListTag){
         setTimeout(function(){
             // console.log("延时运行");
@@ -5625,7 +5710,7 @@
         // console.log("普通插入");
         iqxinstart();
     }
-        
+
     if (true) {
         // console.log('iqxin添加标题节点监视器: title');
         // 延时添加标题监视器, 应对 youtube
@@ -5646,4 +5731,3 @@
         },1000)
     }
 })();
-
