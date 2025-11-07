@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20251107] v1.0.2
+// @name           searchEngineJump 搜索引擎快捷跳转 [20251107] v1.0.3
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
 // @version        5.26.7
 // @created        2011-07-02
 // @lastUpdated    2024-12-22
-// @update-log     1.0.2：适配 Kagi 搜索
+// @update-log     1.0.3：排除 YouTube 视频页；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -36,6 +36,11 @@
 
     // 兼容强制 TrustedHTML 的站点（例如新版 YouTube），确保仍可渲染脚本 UI
     setupTrustedHTMLSupport();
+
+    if (shouldSkipCurrentPage()) {
+        console.log("脚本: 搜索引擎快捷跳转 --- 检测到被排除的页面，已停止执行");
+        return;
+    }
 
     function setupTrustedHTMLSupport() {
         if (typeof window === 'undefined' || window.__searchEngineJumpTrustedHTMLReady) {
@@ -110,7 +115,35 @@
         }
     }
 
+    function shouldSkipCurrentPage() {
+        if (typeof window === 'undefined' || !window.location) {
+            return false;
+        }
+        var host = (window.location.hostname || '').toLowerCase();
+        if (!host) {
+            return false;
+        }
+        var isYouTubeDomain = host === 'youtube.com' || /(^|\.)youtube\.com$/.test(host);
+        if (!isYouTubeDomain) {
+            return false;
+        }
+        var path = window.location.pathname || '';
+        return /^\/watch(?:\/|$)/.test(path);
+    }
+
     function iqxinstart(){
+        if (shouldSkipCurrentPage()) {
+            var removalTargets = document.querySelectorAll('#sej-container, sejspan.sej-drop-list');
+            if (removalTargets && removalTargets.length) {
+                [].forEach.call(removalTargets, function (elem) {
+                    if (elem && elem.parentNode) {
+                        elem.parentNode.removeChild(elem);
+                    }
+                });
+            }
+            return;
+        }
+
         // 根据规则把搜索引擎列表插入到指定网站
         var rules = [
             // 网页搜索/////////////第一个可以当模板看
