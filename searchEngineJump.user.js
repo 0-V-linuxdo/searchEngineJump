@@ -4,8 +4,6 @@
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
 // @version        [20260504] v1.1.3
-// @created        2011-07-02
-// @lastUpdated    2026-05-04
 // @update-log     v1.1.3：缓存远程 favicon 为本地 data URI，修复严格 CSP 页面图标无法显示的问题；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
