@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.2
+// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.3
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
-// @version        [20260504] v1.1.2
+// @version        [20260504] v1.1.3
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.2：README 改为 fork 修改概览，暗色下拉菜单改为不透明背景，并更新版本信息；
+// @update-log     v1.1.3：缓存远程 favicon 为本地 data URI，修复严格 CSP 页面图标无法显示的问题；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -25,6 +25,7 @@
 // @grant          GM_registerMenuCommand
 // @grant          GM_openInTab
 // @grant          GM_xmlhttpRequest
+// @connect        *
 
 // @run-at         document-end
 // ==/UserScript==
@@ -2009,6 +2010,196 @@
             mine:"data:image/svg+xml,%3Csvg t='1666874111000' class='icon' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' p-id='27179' width='32' height='32'%3E%3Cpath d='M949.888 457.258667c26.069333-29.824 13.866667-67.52-24.789333-76.309334L681.728 325.546667l-127.786667-214.677334c-20.266667-34.069333-59.925333-34.090667-80.213333 0l-127.786667 214.677334-243.370666 55.381333c-38.442667 8.746667-50.858667 46.506667-24.789334 76.309333l164.394667 188.053334-22.613333 248.917333c-3.584 39.466667 28.458667 62.805333 64.896 47.146667l237.781333-102.037334a21.333333 21.333333 0 0 0-16.810667-39.210666L267.626667 902.186667c-6.698667 2.88-6.229333 3.221333-5.568-4.096l24.277333-267.093334-176.426667-201.813333c-4.757333-5.461333-4.906667-5.034667 2.133334-6.634667l261.205333-59.434666 137.152-230.4c3.733333-6.293333 3.136-6.293333 6.869333 0l137.173334 230.4 261.205333 59.434666c7.125333 1.621333 6.954667 1.088 2.133333 6.613334l-176.426666 201.813333 24.256 267.093333a21.333333 21.333333 0 1 0 42.496-3.84l-22.613334-248.917333 164.394667-188.053333z' fill='%233D3D3D' p-id='27180'%3E%3C/path%3E%3C/svg%3E",
         };
 
+        var SEJ_ICON_CACHE_KEY = "searchEngineJumpIconCache";
+        var sejIconCache = GM_getValue(SEJ_ICON_CACHE_KEY) || {};
+        if(!sejIconCache || typeof sejIconCache !== "object" || Array.isArray(sejIconCache)){
+            sejIconCache = {};
+        }
+        var sejIconCachePending = {};
+        var sejIconCacheFailed = {};
+
+        function getFallbackIcon(){
+            return icon.web || icon.google || "";
+        }
+
+        function normalizeIconSource(src){
+            return (src || "").toString().trim();
+        }
+
+        function isDataIcon(src){
+            return /^data:image\//i.test(src);
+        }
+
+        function isRemoteIcon(src){
+            return /^https?:\/\//i.test(src);
+        }
+
+        function escapeAttr(value){
+            return String(value || "")
+                .replace(/&/g,"&amp;")
+                .replace(/"/g,"&quot;")
+                .replace(/</g,"&lt;")
+                .replace(/>/g,"&gt;");
+        }
+
+        function getCachedIconValue(src){
+            var cached = sejIconCache[src];
+            if(typeof cached === "string"){
+                return cached;
+            }
+            if(cached && cached.data){
+                return cached.data;
+            }
+            return "";
+        }
+
+        function getIconRenderData(src){
+            var rawSrc = normalizeIconSource(src);
+            var fallback = getFallbackIcon();
+            if(isDataIcon(rawSrc)){
+                return {
+                    src: rawSrc,
+                    rawSrc: rawSrc,
+                    saveSrc: rawSrc
+                };
+            }
+            if(isRemoteIcon(rawSrc)){
+                var cachedSrc = getCachedIconValue(rawSrc);
+                if(cachedSrc){
+                    return {
+                        src: cachedSrc,
+                        rawSrc: rawSrc,
+                        saveSrc: cachedSrc
+                    };
+                }
+                cacheRemoteIcon(rawSrc);
+                return {
+                    src: fallback,
+                    rawSrc: rawSrc,
+                    saveSrc: rawSrc
+                };
+            }
+            return {
+                src: fallback,
+                rawSrc: "",
+                saveSrc: fallback
+            };
+        }
+
+        function getIconSourceAttr(iconData){
+            if(iconData && isRemoteIcon(iconData.rawSrc)){
+                return 'data-iqxin-icon-src="' + escapeAttr(iconData.rawSrc) + '"';
+            }
+            return "";
+        }
+
+        function inferIconMime(src){
+            var path = String(src || "").split("?")[0].toLowerCase();
+            if(/\.svgz?$/.test(path)) return "image/svg+xml";
+            if(/\.jpe?g$/.test(path)) return "image/jpeg";
+            if(/\.gif$/.test(path)) return "image/gif";
+            if(/\.webp$/.test(path)) return "image/webp";
+            if(/\.ico$/.test(path)) return "image/x-icon";
+            return "image/png";
+        }
+
+        function getResponseIconMime(response,src){
+            var headers = response.responseHeaders || "";
+            var match = headers.match(/content-type:\s*([^;\r\n]+)/i);
+            var contentType = match ? match[1].trim().toLowerCase() : "";
+            if(contentType && !/^image\//.test(contentType)){
+                return "";
+            }
+            return contentType || inferIconMime(src);
+        }
+
+        function arrayBufferToDataUri(buffer,mime){
+            if(!buffer){
+                return "";
+            }
+            var bytes = new Uint8Array(buffer);
+            var binary = "";
+            var chunkSize = 0x8000;
+            for(var i=0;i<bytes.length;i+=chunkSize){
+                binary += String.fromCharCode.apply(null,bytes.subarray(i,i+chunkSize));
+            }
+            return "data:" + mime + ";base64," + btoa(binary);
+        }
+
+        function getIconQueryRoots(){
+            var roots = [document];
+            var settingHost = document.querySelector("#sej-setting-host");
+            if(settingHost && settingHost.shadowRoot){
+                roots.push(settingHost.shadowRoot);
+            }
+            return roots;
+        }
+
+        function applyCachedIcon(iconSrc,dataUri){
+            getIconQueryRoots().forEach(function(root){
+                root.querySelectorAll("img.sej-engine-icon[data-iqxin-icon-src]").forEach(function(img){
+                    if(img.dataset.iqxinIconSrc === iconSrc){
+                        img.src = dataUri;
+                    }
+                });
+                root.querySelectorAll("[data-iqxinimg]").forEach(function(engineDom){
+                    if(engineDom.dataset.iqxinimg === iconSrc){
+                        engineDom.dataset.iqxinimg = dataUri;
+                        var img = engineDom.querySelector("img.sej-engine-icon");
+                        if(img){
+                            img.src = dataUri;
+                            img.dataset.iqxinIconSrc = iconSrc;
+                        }
+                    }
+                });
+            });
+        }
+
+        function cacheRemoteIcon(src){
+            if(!isRemoteIcon(src) || getCachedIconValue(src) || sejIconCachePending[src] || sejIconCacheFailed[src]){
+                return;
+            }
+            sejIconCachePending[src] = true;
+            GM_xmlhttpRequest({
+                method:"GET",
+                url:src,
+                responseType:"arraybuffer",
+                timeout:10000,
+                onload:function(response){
+                    delete sejIconCachePending[src];
+                    if(response.status < 200 || response.status >= 400 || !response.response){
+                        sejIconCacheFailed[src] = true;
+                        return;
+                    }
+                    var mime = getResponseIconMime(response,src);
+                    if(!mime){
+                        sejIconCacheFailed[src] = true;
+                        return;
+                    }
+                    var dataUri = arrayBufferToDataUri(response.response,mime);
+                    if(!dataUri){
+                        sejIconCacheFailed[src] = true;
+                        return;
+                    }
+                    sejIconCache[src] = dataUri;
+                    GM_setValue(SEJ_ICON_CACHE_KEY,sejIconCache);
+                    applyCachedIcon(src,dataUri);
+                },
+                onerror:function(){
+                    delete sejIconCachePending[src];
+                    sejIconCacheFailed[src] = true;
+                },
+                ontimeout:function(){
+                    delete sejIconCachePending[src];
+                    sejIconCacheFailed[src] = true;
+                },
+                onabort:function(){
+                    delete sejIconCachePending[src];
+                    sejIconCacheFailed[src] = true;
+                }
+            });
+        }
+
         // 搜索引擎列表
         var engineList = {};
 
@@ -3875,7 +4066,7 @@
 
             container.addEventListener('mousedown', mousedownhandler, true);
 
-            var aPattern = '<a href="" class="sej-engine" target="$blank$" data-iqxincategory="$category$" encoding="$encoding$" gbk="$gbk$" url="$url$"><img src="$favicon$" class="sej-engine-icon" />$name$</a>';
+            var aPattern = '<a href="" class="sej-engine" target="$blank$" data-iqxincategory="$category$" encoding="$encoding$" gbk="$gbk$" url="$url$"><img src="$favicon$" class="sej-engine-icon" $iconSourceAttr$/>$name$</a>';
             var dropLists = [];
             engineList.details.forEach(function (item) {
                 // console.log(item);  // 搜索菜单   ["网页", "web", true]
@@ -3890,17 +4081,15 @@
 
                     if (getSettingData.HideTheSameLink && matchedRule?.url.test(engineUrl)) return;// 去掉跳转到当前引擎的引擎
 
+                    var iconData = getIconRenderData(engine.favicon);
                     var a = aPattern.replace('$encoding$', (engine.encoding || 'utf-8').toLowerCase())
                         .replace('$url$', engineUrl)
                         .replace('$name$', engine.name)
-                        .replace("$category$",category);
+                        .replace("$category$",category)
+                        .replace('$favicon$', escapeAttr(iconData.src))
+                        .replace('$iconSourceAttr$', getIconSourceAttr(iconData));
 
                     // 图标
-                    if (engine.favicon) {
-                        a = a.replace('$favicon$', engine.favicon);
-                    } else {
-                        a = a.replace('src="$favicon$"', '');
-                    };
                     // gbk编码
                     if (engine.gbk) {
                         a = a.replace('$gbk$', engine.gbk);
@@ -3957,6 +4146,7 @@
                     // console.log(icon[item[0].dataset.iqxincategory])
                     if(icon[item[0].dataset.iqxincategory]){
                         item[0].querySelector("img").src = icon[item[0].dataset.iqxincategory]
+                        item[0].querySelector("img").removeAttribute("data-iqxin-icon-src");
 
                     }
                 }
@@ -4461,7 +4651,7 @@
                                 ' data-iqxintarget="$blank$" ' +
                                 ' data-iqxindisabled="$disabled$" ' +
                                 ' data-iqxingbk="$gbk$" ' +
-                                '><img src="$favicon$" class="sej-engine-icon" style="padding-bottom:3px;"/><span>$name$</span></span>' +
+                                '><img src="$favicon$" class="sej-engine-icon" style="padding-bottom:3px;" $iconSourceAttr$/><span>$name$</span></span>' +
                                 ' <span class="iqxin-set-edit" title="编辑 Edit"><img class="sej-engine-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAACDklEQVR4nJXVzUtUURjH8Y/mSNKkki2iwiApxHQ1q/6C+gusoCB6oxbRRqFNL4sWtRKqhVSLIDe1CqpNiwjKIilKLKKFEr2Z2qI0xxHN0+LOm+PMOPOc1T2H7/f5ncO991BdNer30zmxKrl0xV2zKJjRoy6aqkkvbbdVLPuUq+8+5uGXnVILki7qsxgtNDtrTNLcijHvrdYsft0/wQ8DZgSzeqMUDW4IJceYHcvwCd1ies0KZvWI1TnhIH6574Olgg0E74zmhZ902j304by4Cxp5LPjtQNmjy3XPVK2rgmCBCcGgdVXhdBgUBCMEwVMNVeIvBMFLifKC8vgrndFBlRJUhJcWFMd3ZfGuzFRxwWrdu3KTxQQVhi8lqApfKVhf0d4bc2/OckG9Pkur7r3TEw+1FRO0GxdM2Vc2/HHBgr1If935UTfigbt5+C27MeSo9+m5GJYitlCwWR2G8oQZ/FgWX1aFgnZMG852v5nFR4rhMn+2dDVJYFpKqy0SDksUhF9FsE0bWgyIa9bIanihoEUcDTrSz4ueOVMOLxQkzVkrZcaoNz755rmpcnihYNghm3w26Ys/5cGcIKgRBJDyqCIquj8C1PqKZvHK+qVrJ5bMRwmGterU64pkkZupWO3RjXkzUZj9+jVZMGK6IsEaHTbgjpOSUYZL/pa5m4qPIbtyznpHvJaqGB53O33h4T/3VzLuzDhE6AAAAABJRU5ErkJggg=="/></span>' +
                                 ' <span class="iqxin-set-del" title="删除 Delete"><img class="sej-engine-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAADAFBMVEUAAADsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVHsbVH///9VVVVWVlZXV1dYWFhZWVlaWlpbW1tcXFxdXV1eXl5fX19gYGBhYWFiYmJjY2NkZGRlZWVmZmZnZ2doaGhpaWlqampra2tsbGxtbW1ubm5vb29wcHBxcXFycnJzc3N0dHR1dXV2dnZ3d3d4eHh5eXl6enp7e3t8fHx9fX1+fn5/f3+AgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpKTk5OUlJSVlZWWlpaXl5eYmJiZmZmampqbm5ucnJydnZ2enp6fn5+goKChoaGioqKjo6OkpKSlpaWmpqanp6eoqKipqamqqqqrq6usrKytra2urq6vr6+wsLCxsbGysrKzs7O0tLS1tbW2tra3t7e4uLi5ubm6urq7u7u8vLy9vb2+vr6/v7/AwMDBwcHCwsLDw8PExMTFxcXGxsbHx8fIyMjJycnKysrLy8vMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXW1tbX19fY2NjZ2dna2trb29vc3Nzd3d3e3t7f39/g4ODh4eHi4uLj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT19fX29vb39/f4+Pj5+fn6+vr7+/v8/Pz9/f3+/v7///8dej9TAAAAU3RSTlMAAABm7P/sZgAAABPO////zhQAAB/i/////////+IfAAAe4fvk4AAAAAAd/+Q3GxwAFR85FQBjz+LPY+v////r6//////rZM/h4c9jABUdHRUAAP0EcPoAAAEuSURBVHic7ZRnc8IwDIbdEUZHGB0kDsMOMcOMttBBB93Qvcj//y9VjB0Czh13/dz3ixT5OVmSYyMktLK6tm74oYxEMpVGUW1sbm2bM8DMZHP5OWBnd2+/YNnYAWHbKhRL5cocQKjrWFWPuSDmVS3HpUQu1eoNQkiTM9xqd7oHoG6n3cKMNyHcqNfQ4VGPUsr7nh0FbK/PIdw7PkGnZwOZNrqF9AfnF+jyaigLixYp/eH1Dbq9u4eAHyOAHh5HaPz0DCnjANjm5fUNvX98QoGCxyo5Fjmh0K/vH2hzAi0KnqnymMgJrU6gzemQBM+DZpX1/XBYUyAYTTAuZTUg+Aw8Zf+BvwJLR730sPTjXgD0H2YB0BUClXKpGAeE1y+fy2ZMfX12gdOpZMLQAfkE/AL7e5vGZF+dOQAAAABJRU5ErkJggg=="></span>' +
                                 '</span>';
@@ -4496,11 +4686,13 @@
                     for(let ii=0;ii<itemLength;ii++){
                         var jj = ii;
                         if (!engineListItme[jj]){break};
+                        var iconData = getIconRenderData(engineListItme[jj].favicon);
                         var a = aPattern.replace('$name$', engineListItme[jj].name)
-                                .replace('$favicon$', engineListItme[jj].favicon)
+                                .replace('$favicon$', escapeAttr(iconData.src))
+                                .replace('$iconSourceAttr$', getIconSourceAttr(iconData))
                                 .replace("$xin$",jj);
                         // 添加属性
-                        a = a.replace("$img$", engineListItme[jj].favicon)
+                        a = a.replace("$img$", escapeAttr(iconData.saveSrc))
                             .replace("$title$", engineListItme[jj].name)
                             .replace("$link$", engineListItme[jj].url);
                         if (engineListItme[jj].blank) {
@@ -4781,13 +4973,14 @@
                 if (!oimg){
                     oimg = this.getICON(olink);
                 }
+                var iconData = getIconRenderData(oimg);
 
                 var a = '<span class="sej-engine"' +
                             ' data-iqxinimg="$img$" ' +
                             ' data-iqxintitle="$title$" ' +
                             ' data-iqxinlink="$link$" ' +
                             ' data-iqxintarget="$blank$" ' +
-                            '><img src="$favicon$" class="sej-engine-icon" />$name$</span>' +
+                            '><img src="$favicon$" class="sej-engine-icon" $iconSourceAttr$/>$name$</span>' +
                             '<span class="iqxin-set-edit" title="编辑 Edit">' +
                                 '<img class="sej-engine-icon" src="' + icon.edit + '">' +
                             '</span> ' +
@@ -4795,7 +4988,7 @@
                                 '<img class="sej-engine-icon" src="' + icon.del + '">' +
                             '</span>' ;
 
-                a = a.replace("$img$", oimg)
+                a = a.replace("$img$", escapeAttr(iconData.saveSrc))
                     .replace("$title$", otitle)
                     .replace("$link$", olink);
 
@@ -4806,7 +4999,8 @@
                 };
 
                 a = a.replace('$name$', otitle)
-                    .replace('$favicon$', oimg);
+                    .replace('$favicon$', escapeAttr(iconData.src))
+                    .replace('$iconSourceAttr$', getIconSourceAttr(iconData));
 
                 var ospan = document.createElement("span");
                 ospan.className = "drag";
@@ -4998,13 +5192,22 @@
                 oimg = this.$("#iqxin-newIcon").value;
                 oblank = this.$("#iqxin-newTarget").selectedIndex;
                 ogbk = this.$("#iqxin-newGBK").checked;
+                if (!oimg){
+                    oimg = this.getICON(olink);
+                }
+                var iconData = getIconRenderData(oimg);
 
                 this.editTemp.dataset.iqxintitle = otitle;
                 this.editTemp.lastChild.innerText = otitle;  //文本节点
 
                 this.editTemp.dataset.iqxinlink = olink;
-                this.editTemp.dataset.iqxinimg = oimg;
-                this.editTemp.firstChild.src = oimg;
+                this.editTemp.dataset.iqxinimg = iconData.saveSrc;
+                this.editTemp.firstChild.src = iconData.src;
+                if(isRemoteIcon(iconData.rawSrc)){
+                    this.editTemp.firstChild.dataset.iqxinIconSrc = iconData.rawSrc;
+                } else {
+                    this.editTemp.firstChild.removeAttribute("data-iqxin-icon-src");
+                }
 
                 // 是否新标签页打开
                 if (oblank){
@@ -5188,13 +5391,14 @@
 
                 // 具体列表
                 for(let i=0;i<elist.length;i++){
+                    var iconData = getIconRenderData(elist[i].favicon);
                     var a = '<span draggable="true" class="drag">' +
                                 '<span class="sej-engine"' +
                                 ' data-iqxinimg="$img$" ' +
                                 ' data-iqxintitle="$title$" ' +
                                 ' data-iqxinlink="$link$" ' +
                                 ' data-iqxintarget="$blank$" ' +
-                                '><img src="$favicon$" class="sej-engine-icon" />$name$</span>' +
+                                '><img src="$favicon$" class="sej-engine-icon" $iconSourceAttr$/>$name$</span>' +
                                 '<span class="iqxin-set-edit" title="编辑 Edit">' +
                                     '<img class="sej-engine-icon" src="' + icon.edit + '">' +
                                 '</span> ' +
@@ -5203,7 +5407,7 @@
                                 '</span>' +
                             '</span>';
 
-                    a = a.replace("$img$", elist[i].favicon)
+                    a = a.replace("$img$", escapeAttr(iconData.saveSrc))
                         .replace("$title$", elist[i].name)
                         .replace("$link$", elist[i].url);
 
@@ -5214,7 +5418,8 @@
                     };
 
                     a = a.replace('$name$', elist[i].name)
-                        .replace('$favicon$', elist[i].favicon);
+                        .replace('$favicon$', escapeAttr(iconData.src))
+                        .replace('$iconSourceAttr$', getIconSourceAttr(iconData));
 
                     innerHTML += a;
                 }
@@ -5511,17 +5716,24 @@
                 if(this.online)return;
 
                 var that = this;
-                var myImage = new Image;
-                myImage.src = 'https://www.google.com/s2/favicons?domain=www.baidu.com&' + Math.random() ;
-                setTimeout(function(){
-                    // console.log("取消加载");
-                    console.log(myImage.width);
-                    if(myImage.width){
-                        that.online = true;
-                    }else{
-                        myImage.src = undefined;
-                    };
-                },2000);
+                GM_xmlhttpRequest({
+                    method:"GET",
+                    url:'https://www.google.com/s2/favicons?domain=www.baidu.com&' + Math.random(),
+                    responseType:"arraybuffer",
+                    timeout:2000,
+                    onload:function(response){
+                        that.online = response.status >= 200 && response.status < 400 && !!response.response;
+                    },
+                    onerror:function(){
+                        that.online = false;
+                    },
+                    ontimeout:function(){
+                        that.online = false;
+                    },
+                    onabort:function(){
+                        that.online = false;
+                    }
+                });
             },
 
             // 重新加载工具
