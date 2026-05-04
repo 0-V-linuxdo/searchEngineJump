@@ -1,8 +1,6 @@
 # searchEngineJump fork
 
-本分支基于原项目 `qxinGitHub/searchEngineJump` 的 `5.26.11` 版本维护。
-
-相对原分支，本 fork 只做兼容性与界面体验修补，不改变脚本的核心用法。
+本 fork 从原项目 `qxinGitHub/searchEngineJump` 的 `5.26.11` 版本开始修改。
 
 ## 相对原分支的修改
 
@@ -13,4 +11,3 @@
 | 图标缓存 | 将远程 favicon 缓存为本地 data URI，减少严格 CSP 页面中图标无法显示的问题。 |
 | 设置弹窗 | 跟随页面明暗主题，收敛样式影响，并修复滚动穿透、窄屏溢出和布局错位。 |
 | 设置按钮 | `setBtnOpacity=0` 时仍保留可 hover、可点击的设置入口热区。 |
-| 元信息 | 当前脚本版本为 `[20260504] v1.1.3`，并同步更新 `@update-log`。 |
