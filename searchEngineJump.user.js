@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.1
+// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.2
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
-// @version        [20260504] v1.1.1
+// @version        [20260504] v1.1.2
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.1：修复设置弹窗与脚本按钮栏主题适配、弹窗滚动穿透，以及设置按钮透明度为 0 时 hover 不可唤出的问题；
+// @update-log     v1.1.2：修复 README 效果图不可见，补充仓库内预览图，并更新版本信息；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
