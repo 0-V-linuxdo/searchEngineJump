@@ -6,7 +6,7 @@
 // @version        [20260504] v1.1.1
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.1：修复设置弹窗与脚本按钮栏普通/黑暗模式自适应问题，并阻止弹窗滚动穿透到后方网页；
+// @update-log     v1.1.1：修复设置弹窗与脚本按钮栏主题适配、弹窗滚动穿透，以及设置按钮透明度为 0 时 hover 不可唤出的问题；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -6246,13 +6246,35 @@
             setBtn.id = "setBtn";
             GM_addStyle("#setBtn{" +
                             "opacity:"+getSettingData.setBtnOpacity+";"+
+                            "display:inline-flex;"+
+                            "align-items:center;"+
+                            "justify-content:center;"+
+                            "width:28px;"+
+                            "min-width:28px;"+
+                            "height:24px;"+
+                            "line-height:1;"+
+                            "vertical-align:middle;"+
+                            "cursor:pointer;"+
                             "transition:0.5s;"+
                         "}"+
-                        "span#setBtn:hover{" +
-                            "opacity:1;" +
+                        "#setBtn:hover," +
+                        "#setBtn:focus-visible," +
+                        "#setBtn:focus-within{" +
+                            "opacity:1!important;" +
+                        "}" +
+                        "#setBtn img{" +
+                            "display:block!important;" +
+                            "width:16px!important;" +
+                            "height:16px!important;" +
+                            "margin:0!important;" +
+                            "vertical-align:middle!important;" +
+                            "pointer-events:none;" +
                         "}" +
                         "");
             setBtn.innerHTML = `<img style='margin:0 0 -3px 6px;width:16px;vertical-align: baseline;display:inline-block;cursor:pointer;' src="data:image/svg+xml,%3Csvg t='1666950165377' class='icon' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' p-id='11048' width='32' height='32'%3E%3Cpath d='M337.333 517.667c77.406 0 141.974 54.967 156.8 127.998l440.534 0.002c17.673 0 32 14.327 32 32 0 17.496-14.042 31.713-31.471 31.995l-0.53 0.005-440.534 0.001C479.307 782.7 414.74 837.667 337.333 837.667S195.36 782.699 180.534 709.668l-99.2-0.001c-17.674 0-32-14.327-32-32 0-17.497 14.041-31.713 31.47-31.996l0.53-0.004 99.2-0.002c14.825-73.03 79.393-127.998 156.8-127.998z m0 64c-53.019 0-96 42.98-96 96 0 53.019 42.981 96 96 96 53.02 0 96-42.981 96-96 0-53.02-42.98-96-96-96z m341.334-405.334c77.406 0 141.974 54.968 156.799 127.999l99.2 0.001c17.674 0 32 14.327 32 32 0 17.497-14.041 31.713-31.47 31.996l-0.53 0.004-99.2 0.003c-14.826 73.03-79.394 127.997-156.8 127.997-77.405 0-141.973-54.967-156.798-127.997l-440.535-0.003c-17.673 0-32-14.327-32-32 0-17.496 14.042-31.713 31.471-31.995l0.53-0.005 440.534-0.001c14.825-73.031 79.393-127.999 156.799-127.999z m0 64c-53.02 0-96 42.981-96 96 0 53.02 42.98 96 96 96 53.019 0 96-42.98 96-96 0-53.019-42.981-96-96-96z' p-id='11049'%3E%3C/path%3E%3C/svg%3E">`
+            setBtn.setAttribute("tabindex","0");
+            setBtn.setAttribute("role","button");
+            setBtn.setAttribute("aria-label","searchEngineJump 设置");
             document.querySelector("#sej-container").appendChild(setBtn);
             var sejSet = null;
 
