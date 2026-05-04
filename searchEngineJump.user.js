@@ -6,7 +6,7 @@
 // @version        [20260504] v1.1.0
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；设置弹窗迁入 Shadow Root，补全内部图标、主题变量与滚动面板布局；
+// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；设置弹窗迁入 Shadow Root，补全主题自适应并阻止弹窗滚动穿透；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -4037,6 +4037,15 @@
             this.parentTemp = null;
             this.editTemp = null;
             this.online = null;
+            this.hideTimer = null;
+            this.scrollLockState = null;
+            this.themeObserver = null;
+            this.themeMedia = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+            this.boundSyncTheme = this.syncTheme.bind(this);
+            this.boundModalWheel = this.modalWheel.bind(this);
+            this.boundModalTouchStart = this.modalTouchStart.bind(this);
+            this.boundModalTouchMove = this.modalTouchMove.bind(this);
+            this.touchStartY = null;
             this.init();
         };
 
@@ -4049,6 +4058,204 @@
             $$: function(selector){
                 return this.root.querySelectorAll(selector);
             },
+            bindThemeObservers: function(){
+                if(this.themeObserver){
+                    return;
+                }
+                var Observer = window.MutationObserver || window.WebKitMutationObserver;
+                if(Observer){
+                    this.themeObserver = new Observer(this.boundSyncTheme);
+                    var observeThemeAttrs = {
+                        attributes:true,
+                        attributeFilter:["class","style","data-theme","qxintheme"]
+                    };
+                    this.themeObserver.observe(document.documentElement,observeThemeAttrs);
+                    if(document.body){
+                        this.themeObserver.observe(document.body,observeThemeAttrs);
+                    }
+                    if(document.head){
+                        this.themeObserver.observe(document.head,{
+                            childList:true,
+                            subtree:true,
+                            attributes:true,
+                            attributeFilter:["content","name"]
+                        });
+                    }
+                }
+                if(this.themeMedia){
+                    if(this.themeMedia.addEventListener){
+                        this.themeMedia.addEventListener("change",this.boundSyncTheme);
+                    } else if(this.themeMedia.addListener){
+                        this.themeMedia.addListener(this.boundSyncTheme);
+                    }
+                }
+            },
+            unbindThemeObservers: function(){
+                if(this.themeObserver){
+                    this.themeObserver.disconnect();
+                    this.themeObserver = null;
+                }
+                if(this.themeMedia){
+                    if(this.themeMedia.removeEventListener){
+                        this.themeMedia.removeEventListener("change",this.boundSyncTheme);
+                    } else if(this.themeMedia.removeListener){
+                        this.themeMedia.removeListener(this.boundSyncTheme);
+                    }
+                }
+            },
+            themeFromValue: function(value){
+                if(!value){
+                    return null;
+                }
+                var text = String(value).toLowerCase().trim();
+                if(!text || text === "auto" || text === "system"){
+                    return null;
+                }
+                if(/(^|[\s_-])(dark|night|black)([\s_-]|$)/.test(text)){
+                    return "dark";
+                }
+                if(/(^|[\s_-])(light|day|white)([\s_-]|$)/.test(text)){
+                    return "light";
+                }
+                return null;
+            },
+            themeFromClass: function(value){
+                if(!value){
+                    return null;
+                }
+                var text = " " + String(value).toLowerCase() + " ";
+                if(/(\s|^)(dark|theme-dark|dark-mode|night|night-mode)(\s|$)/.test(text)){
+                    return "dark";
+                }
+                if(/(\s|^)(light|theme-light|light-mode|day|day-mode)(\s|$)/.test(text)){
+                    return "light";
+                }
+                return null;
+            },
+            themeFromColorScheme: function(value){
+                if(!value){
+                    return null;
+                }
+                var text = String(value).toLowerCase();
+                var hasDark = /(^|\s)dark(\s|$)/.test(text);
+                var hasLight = /(^|\s)light(\s|$)/.test(text);
+                if(hasDark && !hasLight){
+                    return "dark";
+                }
+                if(hasLight && !hasDark){
+                    return "light";
+                }
+                return null;
+            },
+            getPageTheme: function(){
+                var html = document.documentElement;
+                var body = document.body;
+                var meta = document.querySelector("meta[name='color-scheme']");
+                return this.themeFromValue(body && body.getAttribute("qxintheme")) ||
+                    this.themeFromValue(body && body.getAttribute("data-theme")) ||
+                    this.themeFromValue(html && html.getAttribute("data-theme")) ||
+                    this.themeFromClass(body && body.className) ||
+                    this.themeFromClass(html && html.className) ||
+                    this.themeFromColorScheme(meta && meta.getAttribute("content")) ||
+                    this.themeFromColorScheme(html && html.style && html.style.colorScheme) ||
+                    this.themeFromColorScheme(body && body.style && body.style.colorScheme);
+            },
+            getPreferredTheme: function(){
+                var pageTheme = this.getPageTheme();
+                if(pageTheme){
+                    return pageTheme;
+                }
+                return this.themeMedia && this.themeMedia.matches ? "dark" : "light";
+            },
+            syncTheme: function(){
+                var theme = this.getPreferredTheme();
+                this.host.setAttribute("data-theme",theme);
+                this.host.style.colorScheme = theme;
+            },
+            lockPageScroll: function(){
+                if(this.scrollLockState){
+                    return;
+                }
+                var html = document.documentElement;
+                var body = document.body;
+                this.scrollLockState = {
+                    htmlOverflow: html.style.overflow,
+                    htmlOverscrollBehavior: html.style.overscrollBehavior,
+                    bodyOverflow: body.style.overflow,
+                    bodyOverscrollBehavior: body.style.overscrollBehavior
+                };
+                html.style.overflow = "hidden";
+                body.style.overflow = "hidden";
+                html.style.overscrollBehavior = "none";
+                body.style.overscrollBehavior = "none";
+            },
+            unlockPageScroll: function(){
+                if(!this.scrollLockState){
+                    return;
+                }
+                var html = document.documentElement;
+                var body = document.body;
+                html.style.overflow = this.scrollLockState.htmlOverflow;
+                html.style.overscrollBehavior = this.scrollLockState.htmlOverscrollBehavior;
+                body.style.overflow = this.scrollLockState.bodyOverflow;
+                body.style.overscrollBehavior = this.scrollLockState.bodyOverscrollBehavior;
+                this.scrollLockState = null;
+            },
+            getScrollTarget: function(e){
+                var path = e.composedPath ? e.composedPath() : [];
+                for(var i=0;i<path.length;i++){
+                    var node = path[i];
+                    if(node === this.mask){
+                        break;
+                    }
+                    if(node && node.nodeType === 1 && node.scrollHeight > node.clientHeight){
+                        var overflowY = window.getComputedStyle(node).overflowY;
+                        if(overflowY !== "hidden" && overflowY !== "visible"){
+                            return node;
+                        }
+                    }
+                }
+                return this.mask;
+            },
+            stopScrollAtBoundary: function(e,deltaY){
+                var scroller = this.getScrollTarget(e);
+                var maxScroll = scroller.scrollHeight - scroller.clientHeight;
+                var canScroll = maxScroll > 0;
+                var atTop = scroller.scrollTop <= 0;
+                var atBottom = scroller.scrollTop >= maxScroll - 1;
+
+                e.stopPropagation();
+                if(!canScroll || (deltaY < 0 && atTop) || (deltaY > 0 && atBottom)){
+                    e.preventDefault();
+                }
+            },
+            modalWheel: function(e){
+                this.stopScrollAtBoundary(e,e.deltaY);
+            },
+            modalTouchStart: function(e){
+                if(e.touches && e.touches.length){
+                    this.touchStartY = e.touches[0].clientY;
+                }
+            },
+            modalTouchMove: function(e){
+                if(!e.touches || !e.touches.length || this.touchStartY === null){
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                var nextY = e.touches[0].clientY;
+                var deltaY = this.touchStartY - nextY;
+                this.touchStartY = nextY;
+                this.stopScrollAtBoundary(e,deltaY);
+            },
+            destroy: function(){
+                if(this.hideTimer){
+                    clearTimeout(this.hideTimer);
+                    this.hideTimer = null;
+                }
+                this.unlockPageScroll();
+                this.unbindThemeObservers();
+            },
 
             init: function () {
                 // console.log("init...");
@@ -4056,19 +4263,21 @@
 
                 this.host.id = "sej-setting-host";
                 this.host.style.cssText = "display:block!important;position:static!important;";
-                if(document.body.getAttribute("qxintheme") === "dark"){
-                    this.host.setAttribute("data-theme","dark");
-                }
                 this.ele.id = "settingLayer";
                 this.mask.id = "settingLayerMask";
 
                 this.addGlobalStyle();
+                this.syncTheme();
+                this.bindThemeObservers();
 
                 this.addContent();
 
                 this.mask.addEventListener("click",function(){
                     that.hide();
                 });
+                this.mask.addEventListener("wheel",this.boundModalWheel,{capture:true,passive:false});
+                this.mask.addEventListener("touchstart",this.boundModalTouchStart,{capture:true,passive:true});
+                this.mask.addEventListener("touchmove",this.boundModalTouchMove,{capture:true,passive:false});
                 this.ele.addEventListener("click",function(e){
                     e.stopPropagation();
                 });
@@ -4294,11 +4503,16 @@
                 }
             },
             show: function(){
+                if(this.hideTimer){
+                    clearTimeout(this.hideTimer);
+                    this.hideTimer = null;
+                }
+                this.syncTheme();
+                this.lockPageScroll();
                 var style = this.mask.style;
                 var eleStyle = this.ele.style;
                 style.display = "block";
                 eleStyle.transform = "translateY(-20%)";
-                document.body.style.overflow = "hidden";
 
                 this.windowResize();
 
@@ -4314,12 +4528,17 @@
             hide: function(){
                 this.allBoxClose(); // 关闭所有次级窗口、菜单
 
+                var that = this;
                 var style = this.mask.style;
                 this.ele.style.transform = "translateY(20%)";
                 style.opacity = 0;
-                setTimeout(function () {
+                if(this.hideTimer){
+                    clearTimeout(this.hideTimer);
+                }
+                this.hideTimer = setTimeout(function () {
                     style.display = "none";
-                    document.body.style.overflow = "auto";
+                    that.unlockPageScroll();
+                    that.hideTimer = null;
                 }, 500);
             },
             reset: function(){
@@ -4882,10 +5101,10 @@
                     console.log(odomV,getSettingData.setBtnOpacity);
                     if(getSettingData.setBtnOpacity<0){
                         this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = odomV.toString().padEnd(4,"0");
-                        odom.style.background = "-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, #fff";
+                        odom.style.background = "-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, var(--range-track-bg-qxin, #fff)";
                     }else{
                         this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = "禁用";
-                        odom.style.background = "-webkit-linear-gradient(left,#bdbdbd,#c6c7c7) no-repeat, #fff";
+                        odom.style.background = "-webkit-linear-gradient(left,#bdbdbd,#c6c7c7) no-repeat, var(--range-track-bg-qxin, #fff)";
                     }
                     odom.style.backgroundSize = odom.value*100 +"% 100%";
 
@@ -5166,6 +5385,7 @@
 
             // 重新加载工具
             reloadSet: function(){
+                this.destroy();
                 var elems = document.querySelectorAll('#sej-container, #sej-setting-host, #settingLayerMask, sejspan.sej-drop-list');
                 if (!elems) return;
                 console.log("elems: " + elems);
@@ -5183,12 +5403,12 @@
             rangeChange: function(bool){
                 var odom = this.$("#setBtnOpacityRange");
                 if(getSettingData.setBtnOpacity<0){
-                    odom.style.background = "-webkit-linear-gradient(left,#bdbdbd,#c6c7c7) no-repeat, #fff";
+                    odom.style.background = "-webkit-linear-gradient(left,#bdbdbd,#c6c7c7) no-repeat, var(--range-track-bg-qxin, #fff)";
                     odom.style.backgroundSize = odom.value*100 +"% 100%";
                     this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = "禁用";
                     getSettingData.setBtnOpacity = -odom.value;
                 } else{
-                    odom.style.background = "-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, #fff";
+                    odom.style.background = "-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, var(--range-track-bg-qxin, #fff)";
                     odom.style.backgroundSize = odom.value*100 +"% 100%";
                     let value = odom.value;
                     let valueStr = "";
@@ -5297,7 +5517,8 @@
             addGlobalStyle: function(){
                 var style;
                 var css =
-                    ":host{" +
+                    ":host,:host([data-theme='light']){" +
+                        "color-scheme:light;" +
                         "--font-color-qxin:#333;" +
                         "--background-avtive-color-qxin:#ccc;" +
                         "--background-active-enable-qxin:#cff9ff;" +
@@ -5305,8 +5526,19 @@
                         "--background-hover-color-qxin:#EAEAEA;" +
                         "--background-btn-qxin:#EFF4F8;" +
                         "--background-setting-qxin:#fff;" +
+                        "--dialog-background-qxin:#1D1D1D;" +
+                        "--dialog-font-color-qxin:#e8e8e8;" +
+                        "--input-background-qxin:#fff;" +
+                        "--input-focus-background-qxin:#f1d2d2;" +
+                        "--input-color-qxin:#333;" +
+                        "--input-border-qxin:#d9d9d9;" +
+                        "--range-track-bg-qxin:#fff;" +
+                        "--checkbox-background-qxin:#fff;" +
+                        "--button-dialog-background-qxin:#fff;" +
+                        "--button-dialog-color-qxin:#333;" +
                     "}" +
                     ":host([data-theme='dark']){" +
+                        "color-scheme:dark;" +
                         "--font-color-qxin:#BDC1BC;" +
                         "--background-avtive-color-qxin:#424242;" +
                         "--background-active-enable-qxin:#274144;" +
@@ -5314,16 +5546,28 @@
                         "--background-hover-color-qxin:#424242;" +
                         "--background-btn-qxin:#292f36;" +
                         "--background-setting-qxin:#202124;" +
+                        "--dialog-background-qxin:#1D1D1D;" +
+                        "--dialog-font-color-qxin:#e8e8e8;" +
+                        "--input-background-qxin:#292f36;" +
+                        "--input-focus-background-qxin:#323f48;" +
+                        "--input-color-qxin:#e8e8e8;" +
+                        "--input-border-qxin:#4a545f;" +
+                        "--range-track-bg-qxin:#31373f;" +
+                        "--checkbox-background-qxin:#292f36;" +
+                        "--button-dialog-background-qxin:#292f36;" +
+                        "--button-dialog-color-qxin:#e8e8e8;" +
                     "}" +
                     "#settingLayerMask{" +
                         "display: none;" +
                         "position: fixed;" +
                         "top:0; right:0; bottom:0; left:0;" +
+                        "color-scheme:inherit;" +
                         "background-color: rgba(0,0,0,.3);" +
                         "backdrop-filter: blur(10px);" +
                         "z-index: 200000000;" +
                         "overflow-x: hidden;" +
                         "overflow-y: auto;" +
+                        "overscroll-behavior: contain;" +
                         "font-family: arial,sans-serif;" +
                         "width: 100vw;" +
                         "min-height: 100vh;" +
@@ -5356,6 +5600,9 @@
                         "text-transform:none;" +
                         "opacity:1;" +
                         "box-shadow:none;" +
+                        "color:var(--input-color-qxin, #333);" +
+                        "background-color:var(--input-background-qxin, #fff);" +
+                        "border-color:var(--input-border-qxin, #d9d9d9);" +
                     "}" +
                     "#settingLayerMask #settingLayer{" +
                         "display: flex;" +
@@ -5577,10 +5824,10 @@
                         "position: absolute;" +
                         "top: 0;" +
                         "left: 0;" +
-                        "background: #fff;" +
+                        "background: var(--checkbox-background-qxin, #fff);" +
                         "width: 100%;" +
                         "height: 100%;" +
-                        "border: 1px solid #d9d9d9;" +
+                        "border: 1px solid var(--input-border-qxin, #d9d9d9);" +
                         "box-sizing:border-box;" +
                     "}" +
                     "#settingLayerMask input[type=checkbox]:checked:after{" +
@@ -5658,6 +5905,9 @@
                         "visibility:visible !important;" +
                         "opacity:1 !important;" +
                     "}" +
+                    "#settingLayerMask #nSearchList{" +
+                        "background:var(--background-btn-qxin, #EFF4F8) !important;" +
+                    "}" +
                     "#settingLayerMask #btnEle span.iqxin-btn-active{" +
                         "color:red;" +
                         "border-color:red;" +
@@ -5672,9 +5922,9 @@
                         "top:50%;" +
                         "left:50%;" +
                         "padding:22px;" +
-                        "background:rgb(29, 29, 29);" +
+                        "background:var(--dialog-background-qxin, #1D1D1D);" +
                         "border-radius:4px;" +
-                        "color: #e8e8e8;" +
+                        "color: var(--dialog-font-color-qxin, #e8e8e8);" +
                         "margin: -149px -117px;" +
                     "}" +
                     "#settingLayerMask #newSearchListBox input," +
@@ -5683,19 +5933,21 @@
                         "padding: 4px 0 4px 5px;" +
                         "border-radius: 4px;" +
                         "outline: none;" +
+                        "background:var(--input-background-qxin, #fff);" +
+                        "color:var(--input-color-qxin, #333);" +
                     "}" +
                     "#settingLayerMask #newSearchListBox input:focus," +
                     "#settingLayerMask #newSearchBox input:focus {" +
-                        "background: #f1d2d2;" +
+                        "background: var(--input-focus-background-qxin, #f1d2d2);" +
                         "transition: 0.5s;" +
                     "}" +
                     "#settingLayerMask .addItemBoxBtn{" +
                         "cursor: pointer;" +
-                        "background: #fff;" +
-                        "border: none;" +
+                        "background: var(--button-dialog-background-qxin, #fff);" +
+                        "border: 1px solid var(--input-border-qxin, #d9d9d9);" +
                         "border-radius: 4px;" +
                         "padding: 4px 10px;" +
-                        "color: #333;" +
+                        "color: var(--button-dialog-color-qxin, #333);" +
                         "transition:0.3s;" +
                     "}" +
                     "#settingLayerMask #xin-centerDisplay select," +
@@ -5734,11 +5986,23 @@
                     "}" +
                     "#settingLayerMask #iqxin-editCodeBox button{" +
                         "cursor:pointer;" +
+                        "background:var(--button-dialog-background-qxin, #fff);" +
+                        "color:var(--button-dialog-color-qxin, #333);" +
+                        "border:1px solid var(--input-border-qxin, #d9d9d9);" +
+                    "}" +
+                    "#settingLayerMask #iqxin-editCodeBox{" +
+                        "background:var(--dialog-background-qxin, #1D1D1D) !important;" +
+                        "color:var(--dialog-font-color-qxin, #e8e8e8);" +
+                    "}" +
+                    "#settingLayerMask #iqxin-editCodeBox textarea{" +
+                        "background:var(--input-background-qxin, #fff);" +
+                        "color:var(--input-color-qxin, #333);" +
+                        "border:1px solid var(--input-border-qxin, #d9d9d9);" +
                     "}" +
 
                     // 关闭按钮
                     "#settingLayerMask #xin-close{" +
-                        "background:white;" +
+                        "background:var(--background-btn-qxin, #fff);" +
                         "color:#3ABDC1;" +
                         "line-height:20px;" +
                         "text-align:center;" +
@@ -5775,7 +6039,7 @@
                         "padding:0;" +
                         "vertical-align:middle;" +
                         "opacity:1;" +
-                        "background:-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, #fff;" +
+                        "background:-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, var(--range-track-bg-qxin, #fff);" +
                         "border-radius: 10px; /*这个属性设置使填充进度条时的图形为圆角*/" +
                     "}" +
                     "#settingLayerMask #setBtnOpacityRange::-webkit-slider-thumb{" +
@@ -5791,7 +6055,7 @@
                         "height: 18px;" +
                         "width: 18px;" +
                         "margin-top: -5px; /*使滑块超出轨道部分的偏移量相等*/" +
-                        "background: #fff; " +
+                        "background: var(--input-background-qxin, #fff); " +
                         "border-radius: 50%; /*外观设置为圆形*/" +
                         "border: solid 0.125em rgba(205, 224, 230, 0.5); /*设置边框*/" +
                         "box-shadow: 0 .125em .125em #3b4547; /*添加底部阴影*/" +
@@ -5805,8 +6069,8 @@
                         "transform:translate(-50%,-50%);" +
                         "padding: 15px 30px;" +
                         "border-radius: 4px;" +
-                        "background:#1D1D1D;" +
-                        "color:#fff;" +
+                        "background:var(--dialog-background-qxin, #1D1D1D);" +
+                        "color:var(--dialog-font-color-qxin, #fff);" +
                     "}" +
                     "#settingLayerMask #importingBox li{" +
                         "margin:5px;" +
