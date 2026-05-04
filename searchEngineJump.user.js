@@ -6,7 +6,7 @@
 // @version        [20260504] v1.1.0
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；设置弹窗迁入 Shadow Root，补全内部图标与控件样式；
+// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；设置弹窗迁入 Shadow Root，补全内部图标、主题变量与滚动面板布局；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -4056,6 +4056,9 @@
 
                 this.host.id = "sej-setting-host";
                 this.host.style.cssText = "display:block!important;position:static!important;";
+                if(document.body.getAttribute("qxintheme") === "dark"){
+                    this.host.setAttribute("data-theme","dark");
+                }
                 this.ele.id = "settingLayer";
                 this.mask.id = "settingLayerMask";
 
@@ -4293,7 +4296,7 @@
             show: function(){
                 var style = this.mask.style;
                 var eleStyle = this.ele.style;
-                style.display = "flex";
+                style.display = "block";
                 eleStyle.transform = "translateY(-20%)";
                 document.body.style.overflow = "hidden";
 
@@ -5294,26 +5297,44 @@
             addGlobalStyle: function(){
                 var style;
                 var css =
+                    ":host{" +
+                        "--font-color-qxin:#333;" +
+                        "--background-avtive-color-qxin:#ccc;" +
+                        "--background-active-enable-qxin:#cff9ff;" +
+                        "--background-active-disable-qxin:#ffa2a2;" +
+                        "--background-hover-color-qxin:#EAEAEA;" +
+                        "--background-btn-qxin:#EFF4F8;" +
+                        "--background-setting-qxin:#fff;" +
+                    "}" +
+                    ":host([data-theme='dark']){" +
+                        "--font-color-qxin:#BDC1BC;" +
+                        "--background-avtive-color-qxin:#424242;" +
+                        "--background-active-enable-qxin:#274144;" +
+                        "--background-active-disable-qxin:#583535;" +
+                        "--background-hover-color-qxin:#424242;" +
+                        "--background-btn-qxin:#292f36;" +
+                        "--background-setting-qxin:#202124;" +
+                    "}" +
                     "#settingLayerMask{" +
                         "display: none;" +
-                        "justify-content: center;" +
-                        "align-items: center;" +
                         "position: fixed;" +
                         "top:0; right:0; bottom:0; left:0;" +
                         "background-color: rgba(0,0,0,.3);" +
                         "backdrop-filter: blur(10px);" +
                         "z-index: 200000000;" +
-                        "overflow: auto;" +
+                        "overflow-x: hidden;" +
+                        "overflow-y: auto;" +
                         "font-family: arial,sans-serif;" +
-                        "min-height: 100%;" +
+                        "width: 100vw;" +
+                        "min-height: 100vh;" +
                         "font-size:16px;" +
                         "transition:0.3s;" +
                         "opacity:0;" +
                         "user-select: none;" +
                         "-moz-user-select: none;" +
-                        "padding-bottom: 80px;" +
+                        "padding: 24px 20px 96px;" +
                         "box-sizing: border-box;" +
-                        "color: var(--font-color-qxin);" +
+                        "color: var(--font-color-qxin, #333);" +
                     "}" +
                     "#settingLayerMask," +
                     "#settingLayerMask *," +
@@ -5339,21 +5360,27 @@
                     "#settingLayerMask #settingLayer{" +
                         "display: flex;" +
                         "flex-wrap: wrap;" +
+                        "align-content:flex-start;" +
+                        "align-items:flex-start;" +
                         "padding: 20px;" +
-                        "margin: 2% 25px 2% 5px;" +
-                        "background-color: var(--background-setting-qxin);" +
+                        "margin: 0 auto;" +
+                        "width: calc(100vw - 40px);" +
+                        "max-width: calc(100vw - 40px);" +
+                        "min-width: min(700px, calc(100vw - 40px));" +
+                        "background-color: var(--background-setting-qxin, #fff);" +
                         "border-radius: 4px;" +
                         "position: relative;" +
-                        "min-width: 700px;" +
-                        "max-width: 94%;" +
                         "font-size:16px;" +
                         "line-height:1.5;" +
-                        "color: var(--font-color-qxin);" +
+                        "color: var(--font-color-qxin, #333);" +
                         "transition:0.5s;" +
                     "}" +
                     "#settingLayerMask .iqxin-items{" +
+                        "align-self:flex-start;" +
                         "min-width:5em;" +
                         "margin: 0 5px 0px;" +
+                        "background:transparent;" +
+                        "color:inherit;" +
                     "}" +
                     "#settingLayer .drag{" +
                         "display: block;" +
@@ -5390,21 +5417,21 @@
                     "}" +
                     "#settingLayerMask [data-iqxindisabled='true']," +
                     "#settingLayerMask [data-xin^='-']{" +
-                        "background-color: var(--background-avtive-color-qxin);" +
+                        "background-color: var(--background-avtive-color-qxin, #ccc);" +
                         "text-decoration: line-through;" +
                         "text-decoration-color:red;" +
                         "border-radius:2px;" +
                         "transition:.3s;" +
                     "}" +
                     "#settingLayerMask .sejtitle:not([data-xin^='-']):hover{" +
-                        "background:var(--background-active-enable-qxin);" +
+                        "background:var(--background-active-enable-qxin, #cff9ff);" +
                     "}" +
                     "#settingLayerMask .sej-engine:hover{" +
-                        "background-color: var(--background-active-enable-qxin);" +
+                        "background-color: var(--background-active-enable-qxin, #cff9ff);" +
                     "}" +
                     "#settingLayerMask [data-iqxindisabled='true']:hover," +
                     "#settingLayerMask [data-xin^='-']:hover{" +
-                        "background-color: var(--background-active-disable-qxin);" +
+                        "background-color: var(--background-active-disable-qxin, #ffa2a2);" +
                     "}" +
                     "#settingLayerMask label{" +
                         "display:inline-flex;" +
@@ -5443,7 +5470,7 @@
                         "flex:0 0 100%;" +
                         "width:100%;" +
                         "margin-top:8px;" +
-                        "background: var(--background-setting-qxin);" +
+                        "background: var(--background-setting-qxin, #fff);" +
                         "border-radius: 4px;" +
                     "}" +
                     "#settingLayerMask #btnEle{" +
@@ -5468,7 +5495,7 @@
                         "display: inline-flex;" +
                         "align-items:center;" +
                         "justify-content:center;" +
-                        "background: var(--background-btn-qxin);" +
+                        "background: var(--background-btn-qxin, #EFF4F8);" +
                         "border: 1px solid #3abdc1;" +
                         "margin: 8px 0;" +
                         "color: #3abdc1;" +
@@ -5517,12 +5544,12 @@
                         "gap:8px 10px;" +
                         "min-height:58px;" +
                         "padding:0 10px;" +
-                        "background: var(--background-setting-qxin);" +
+                        "background: var(--background-setting-qxin, #fff);" +
                         "border-radius: 4px;" +
                     "}" +
                     "#settingLayerMask #moreSet.iqxin-btn-active," +
                     "#settingLayerMask #moreSet.iqxin-btn-active:hover{" +
-                        "background: var(--background-btn-qxin);" +
+                        "background: var(--background-btn-qxin, #EFF4F8);" +
                         "color:red;" +
                         "border-color:red;" +
                     "}" +
@@ -5685,7 +5712,7 @@
                         "padding: 0px 5px;" +
                         "cursor: pointer;" +
                         "text-decoration: underline;" +
-                        "background: var(--background-btn-qxin);" +
+                        "background: var(--background-btn-qxin, #EFF4F8);" +
                     "}" +
                     "#settingLayerMask #titleEdit{" +
                         "width:6em;" +
