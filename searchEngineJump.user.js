@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.0
+// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.1
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
-// @version        [20260504] v1.1.0
+// @version        [20260504] v1.1.1
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；设置弹窗迁入 Shadow Root，补全主题自适应并阻止弹窗滚动穿透；
+// @update-log     v1.1.1：修复设置弹窗与脚本按钮栏普通/黑暗模式自适应问题，并阻止弹窗滚动穿透到后方网页；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -3373,7 +3373,19 @@
             styleText += `
                 body {
                     --font-color-qxin:#333;
-
+                    --background-color-qxin: transparent;
+                    --background-avtive-color-qxin: #ccc;
+                    --background-active-enable-qxin:#cff9ff;
+                    --background-active-disable-qxin:#ffa2a2;
+                    --background-hover-color-qxin: #EAEAEA;
+                    --trigger-shown-qxin: #DEEDFF !important;
+                    --sej-drop-list-background-qxin:rgba(255,255,255,0.7);
+                    --background-btn-qxin:#EFF4F8;
+                    --background-setting-qxin:#fff;
+                }
+                body[qxintheme="light"] {
+                    --font-color-qxin:#333;
+                    --background-color-qxin: transparent;
                     --background-avtive-color-qxin: #ccc;
                     --background-active-enable-qxin:#cff9ff;
                     --background-active-disable-qxin:#ffa2a2;
@@ -3385,7 +3397,7 @@
                 }
                 body[qxintheme="dark"] {
                     --font-color-qxin:#BDC1BC;
-                    --background-color-qxin: #202124;
+                    --background-color-qxin: transparent;
                     --background-avtive-color-qxin: #424242;
                     --background-active-enable-qxin:#274144;
                     --background-active-disable-qxin:#583535;
@@ -3394,6 +3406,20 @@
                     --sej-drop-list-background-qxin:rgba(0,0,0,0.7);
                     --background-btn-qxin:#292f36;
                     --background-setting-qxin:#202124;
+                }
+                @media (prefers-color-scheme: dark) {
+                    body:not([qxintheme="light"]) {
+                        --font-color-qxin:#BDC1BC;
+                        --background-color-qxin: transparent;
+                        --background-avtive-color-qxin: #424242;
+                        --background-active-enable-qxin:#274144;
+                        --background-active-disable-qxin:#583535;
+                        --background-hover-color-qxin: #424242;
+                        --trigger-shown-qxin: #424242 !important;
+                        --sej-drop-list-background-qxin:rgba(0,0,0,0.7);
+                        --background-btn-qxin:#292f36;
+                        --background-setting-qxin:#202124;
+                    }
                 }
                 `
             // 搜索列表的样式
@@ -3433,6 +3459,9 @@
                 }
                 #sej-container a{
                     border-radius:2px;
+                }
+                body[qxintheme="dark"] #setBtn img {
+                    filter: invert(0.82);
                 }
                 #sej-expanded-category {
                     font-weight: bold;
@@ -3579,13 +3608,107 @@
             // }
             GM_addStyle(styleText);
 
-            // 夜间模式
-            let scheme = document.getElementsByTagName('meta')['color-scheme']
-            if(scheme){
-                console.log("搜索到相关选项, ", scheme.content);
-                if(scheme.content=="dark"){
-                    console.log("设置为夜间模式");
-                    document.body.setAttribute("qxintheme","dark")
+            syncSEJPageTheme();
+            if(!window.__sejThemeSyncStarted){
+                window.__sejThemeSyncStarted = true;
+                var syncThemeObserver = window.MutationObserver || window.WebKitMutationObserver;
+                if(syncThemeObserver){
+                    var sejThemeObserver = new syncThemeObserver(syncSEJPageTheme);
+                    var observeThemeAttrs = {
+                        attributes:true,
+                        attributeFilter:["class","style","data-theme","qxintheme"]
+                    };
+                    sejThemeObserver.observe(document.documentElement,observeThemeAttrs);
+                    if(document.body){
+                        sejThemeObserver.observe(document.body,observeThemeAttrs);
+                    }
+                    if(document.head){
+                        sejThemeObserver.observe(document.head,{
+                            childList:true,
+                            subtree:true,
+                            attributes:true,
+                            attributeFilter:["content","name"]
+                        });
+                    }
+                    window.__sejThemeObserver = sejThemeObserver;
+                }
+                var sejThemeMedia = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+                if(sejThemeMedia){
+                    if(sejThemeMedia.addEventListener){
+                        sejThemeMedia.addEventListener("change",syncSEJPageTheme);
+                    } else if(sejThemeMedia.addListener){
+                        sejThemeMedia.addListener(syncSEJPageTheme);
+                    }
+                }
+                window.__sejThemeMedia = sejThemeMedia;
+            }
+
+            function sejThemeFromValue(value){
+                if(!value){
+                    return null;
+                }
+                var text = String(value).toLowerCase().trim();
+                if(!text || text === "auto" || text === "system"){
+                    return null;
+                }
+                if(/(^|[\s_-])(dark|night|black)([\s_-]|$)/.test(text)){
+                    return "dark";
+                }
+                if(/(^|[\s_-])(light|day|white)([\s_-]|$)/.test(text)){
+                    return "light";
+                }
+                return null;
+            }
+            function sejThemeFromClass(value){
+                if(!value){
+                    return null;
+                }
+                var text = " " + String(value).toLowerCase() + " ";
+                if(/(\s|^)(dark|theme-dark|dark-mode|night|night-mode)(\s|$)/.test(text)){
+                    return "dark";
+                }
+                if(/(\s|^)(light|theme-light|light-mode|day|day-mode)(\s|$)/.test(text)){
+                    return "light";
+                }
+                return null;
+            }
+            function sejThemeFromColorScheme(value){
+                if(!value){
+                    return null;
+                }
+                var text = String(value).toLowerCase();
+                var hasDark = /(^|\s)dark(\s|$)/.test(text);
+                var hasLight = /(^|\s)light(\s|$)/.test(text);
+                if(hasDark && !hasLight){
+                    return "dark";
+                }
+                if(hasLight && !hasDark){
+                    return "light";
+                }
+                return null;
+            }
+            function getSEJPageTheme(){
+                var html = document.documentElement;
+                var body = document.body;
+                var meta = document.querySelector("meta[name='color-scheme']");
+                return sejThemeFromValue(body && body.getAttribute("data-theme")) ||
+                    sejThemeFromValue(html && html.getAttribute("data-theme")) ||
+                    sejThemeFromClass(body && body.className) ||
+                    sejThemeFromClass(html && html.className) ||
+                    sejThemeFromColorScheme(meta && meta.getAttribute("content")) ||
+                    sejThemeFromColorScheme(html && html.style && html.style.colorScheme) ||
+                    sejThemeFromColorScheme(body && body.style && body.style.colorScheme);
+            }
+            function syncSEJPageTheme(){
+                if(!document.body){
+                    return;
+                }
+                var theme = getSEJPageTheme();
+                if(!theme){
+                    theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                }
+                if(document.body.getAttribute("qxintheme") !== theme){
+                    document.body.setAttribute("qxintheme",theme);
                 }
             }
 
