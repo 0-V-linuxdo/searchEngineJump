@@ -3,10 +3,10 @@
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
-// @version        1.1.0
+// @version        [20260504] v1.1.0
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；加固设置弹窗内部样式作用域，恢复按钮区、复选框、透明度滑块显示；
+// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；设置弹窗迁入 Shadow Root，隔离页面样式污染；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -4029,6 +4029,8 @@
         var dragData = null;
 
         function SEJsetting(){
+            this.host = document.createElement("div");
+            this.root = this.host.attachShadow({mode: "open"});
             this.ele = document.createElement("div");
             this.mask = document.createElement("div");
 
@@ -4042,10 +4044,19 @@
             testabc : "hahah",
             aPatternParent : "<div></div>",
 
+            $: function(selector){
+                return this.root.querySelector(selector);
+            },
+
+            $$: function(selector){
+                return this.root.querySelectorAll(selector);
+            },
+
             init: function () {
                 // console.log("init...");
                 var that = this;
 
+                this.host.id = "sej-setting-host";
                 this.ele.id = "settingLayer";
                 this.mask.id = "settingLayerMask";
 
@@ -4061,7 +4072,8 @@
                 });
 
                 this.mask.appendChild(this.ele);
-                document.body.appendChild(this.mask);
+                this.root.appendChild(this.mask);
+                document.body.appendChild(this.host);
 
                 // 绑定事件
                 this.ele.addEventListener("click",that.domClick.bind(this),false);
@@ -4069,18 +4081,18 @@
                 this.setDragNode(this.ele); //设置拖动
                 // input[range]
                 that.rangeChange(true);
-                document.querySelector("#setBtnOpacityRange").addEventListener("input",that.rangeChange);
+                this.$("#setBtnOpacityRange").addEventListener("input",that.rangeChange.bind(that));
             },
             dragEvent: function(){
                 var that = this;
-                var odivsdrag = document.querySelectorAll(".drag");
+                var odivsdrag = this.$$(".drag");
                 [].forEach.call(odivsdrag,function(odiv){
                     odiv.addEventListener("dragstart",that.domdragstart,false);
                     odiv.addEventListener('dragenter', that.domdragenter, false);
                     odiv.addEventListener('dragover', that.domdragover, false);
                     odiv.addEventListener('dragleave', that.domdragleave, false);
-                    odiv.addEventListener('drop', that.domdrop, false);
-                    odiv.addEventListener('dragend',that.domdropend, false);
+                    odiv.addEventListener('drop', that.domdrop.bind(that), false);
+                    odiv.addEventListener('dragend',that.domdropend.bind(that), false);
                 });
             },
             addContent: function(){
@@ -4316,46 +4328,46 @@
                     this.addDelremove();
                 } else {
                     // console.log("不存在,增加增加");
-                    var obtn = document.querySelector("#xin-addDel");
+                    var obtn = this.$("#xin-addDel");
                     obtn.classList.add("iqxin-btn-active");
 
-                    var odom = document.querySelectorAll(".iqxin-set-del");
+                    var odom = this.$$(".iqxin-set-del");
                     [].forEach.call(odom,function(div){
                         div.classList.add("iqxin-set-active");
                     });
 
                     // 标题添加删除框
-                    var odom = document.querySelectorAll(".iqxin-set-title-del");
+                    var odom = this.$$(".iqxin-set-title-del");
                     [].forEach.call(odom,function(div){
                         // console.log(div);
                         div.classList.add("iqxin-set-active");
                     });
 
                     // 增加单个搜索
-                    var oitemAdd = document.querySelectorAll(".iqxin-additem");
+                    var oitemAdd = this.$$(".iqxin-additem");
                     [].forEach.call(oitemAdd,function(div){
                         // console.log(div);
                         div.classList.add("iqxin-set-active");
                     });
 
                     // 添加搜索列表
-                    var olistAdd = document.querySelector("#nSearchList");
+                    var olistAdd = this.$("#nSearchList");
                     olistAdd.classList.add("iqxin-set-active");
 
                 }
             },
             // 关闭 “添加删除框”
             addDelremove: function(bool){
-                var obtn = document.querySelector(".iqxin-btn-active");
+                var obtn = this.$("#xin-addDel.iqxin-btn-active");
                 if(obtn){
                     obtn.classList.remove("iqxin-btn-active");
 
-                    var odom = document.querySelectorAll(".iqxin-set-active");
+                    var odom = this.$$(".iqxin-set-active");
                     [].forEach.call(odom,function(div){
                         div.classList.remove("iqxin-set-active");
                     });
 
-                    var oitemAdd = document.querySelectorAll(".iqxin-additem");
+                    var oitemAdd = this.$$(".iqxin-additem");
                     [].forEach.call(oitemAdd,function(div){
                         div.classList.remove("iqxin-set-active");
                     });
@@ -4390,15 +4402,15 @@
 
                 this.ele.appendChild(newDiv);
                 setTimeout(function(){newDiv.style.cssText="";},10);
-                document.querySelector("#iqxin-newTitle").focus();
+                this.$("#iqxin-newTitle").focus();
             },
             // 内部逻辑,：添加新的搜索
             addItemEnger: function(){
                 var otitle,olink,oimg,oblank;
-                otitle = document.querySelector("#iqxin-newTitle").value;
-                olink = document.querySelector("#iqxin-newLink").value;
-                oimg = document.querySelector("#iqxin-newIcon").value;
-                oblank = document.querySelector("#iqxin-newTarget").selectedIndex;
+                otitle = this.$("#iqxin-newTitle").value;
+                olink = this.$("#iqxin-newLink").value;
+                oimg = this.$("#iqxin-newIcon").value;
+                oblank = this.$("#iqxin-newTarget").selectedIndex;
 
                 if (!oimg){
                     oimg = this.getICON(olink);
@@ -4441,7 +4453,7 @@
             },
             addItemBoxRemove: function(ele){
                 ele = ele?ele:"#newSearchBox"
-                var newBox = document.querySelector(ele);
+                var newBox = this.$(ele);
                 if(newBox){
                     // newBox.style.transform = "translateY(30%)";
                     newBox.style.top = "60%";
@@ -4488,7 +4500,7 @@
 
             // 界面, 框: 添加新的搜索列表
             addSearchListBox: function(){
-                var odiv = document.querySelector("#newSearchListBox");
+                var odiv = this.$("#newSearchListBox");
                 if (odiv){
                     this.boxClose("#newSearchListBox");
                     return;
@@ -4510,11 +4522,11 @@
                     "";
                 this.ele.appendChild(newDiv);
 
-                document.querySelector("#iqxin-newSearchListName").focus();
+                this.$("#iqxin-newSearchListName").focus();
             },
             addSearchListEnger: function(){
-                var name = document.querySelector("#iqxin-newSearchListName").value;
-                var innerName = document.querySelector("#iqxin-newSearchListInnerName").value;
+                var name = this.$("#iqxin-newSearchListName").value;
+                var innerName = this.$("#iqxin-newSearchListInnerName").value;
 
                 if(innerName.length===0){
                     alert("内部名称不能为空");
@@ -4545,12 +4557,12 @@
                 // this.boxClose("#newSearchListBox");
                 this.addItemBoxRemove("#newSearchListBox");
 
-                var btnEle = document.querySelector("#btnEle");
+                var btnEle = this.$("#btnEle");
                 btnEle.parentNode.insertBefore(odiv,btnEle);
             },
 
             boxClose: function(ele){
-                var odiv = document.querySelector(ele);
+                var odiv = this.$(ele);
                 if(odiv){
                     odiv.parentNode.removeChild(odiv);
                 }
@@ -4611,15 +4623,15 @@
 
                 this.ele.appendChild(newDiv);
                 setTimeout(function(){newDiv.style.cssText="";},10);
-                document.querySelector("#iqxin-newTitle").select();
+                this.$("#iqxin-newTitle").select();
             },
             addEditBoxEnger: function(){
                 var otitle,olink,oimg,oblank,ogbk;
-                otitle = document.querySelector("#iqxin-newTitle").value;
-                olink = document.querySelector("#iqxin-newLink").value;
-                oimg = document.querySelector("#iqxin-newIcon").value;
-                oblank = document.querySelector("#iqxin-newTarget").selectedIndex;
-                ogbk = document.querySelector("#iqxin-newGBK").checked;
+                otitle = this.$("#iqxin-newTitle").value;
+                olink = this.$("#iqxin-newLink").value;
+                oimg = this.$("#iqxin-newIcon").value;
+                oblank = this.$("#iqxin-newTarget").selectedIndex;
+                ogbk = this.$("#iqxin-newGBK").checked;
 
                 this.editTemp.dataset.iqxintitle = otitle;
                 this.editTemp.lastChild.innerText = otitle;  //文本节点
@@ -4652,7 +4664,7 @@
                 var element = e.target.parentNode.firstChild;
                 element.classList.remove("iqxin-pointer-events");
 
-                var flag = document.querySelector("#titleEdit");
+                var flag = this.$("#titleEdit");
                 // 存在编辑的标题 && 之前的编辑的节点与点击的节点是同一个节点
                 if(flag && flag.parentNode == element){
                         element.innerHTML = element.firstChild.value?element.firstChild.value:"空";
@@ -4685,7 +4697,7 @@
                 }
             },
             addTitleEditBoxRemove:function(){
-                var odiv = document.querySelector("#titleEdit");
+                var odiv = this.$("#titleEdit");
                 if(odiv){
                     odiv.parentNode.innerHTML = odiv.value?odiv.value:"空";
                 }
@@ -4722,7 +4734,7 @@
                 this.ele.appendChild(editbox);
             },
             editCodeBoxSave: function(){
-                var codevalue = document.querySelector("#iqxin-editCodeBox textarea").value;
+                var codevalue = this.$("#iqxin-editCodeBox textarea").value;
                 if(codevalue){
                     // console.log(JSON.parse(codevalue));
                     GM_setValue("searchEngineJumpData",JSON.parse(codevalue));
@@ -4737,7 +4749,7 @@
                 }
             },
             editCodeBoxClose: function(){
-                var box = document.querySelector("#iqxin-editCodeBox");
+                var box = this.$("#iqxin-editCodeBox");
                 if(box){
                     box.parentNode.removeChild(box);
                 }
@@ -4745,7 +4757,7 @@
 
             // 导入窗口
             addImportingBox: function(){
-                var odiv = document.querySelector("#importingBox");
+                var odiv = this.$("#importingBox");
                 if (odiv){
                     this.boxClose("#importingBox");
                     return;
@@ -4851,22 +4863,22 @@
 
                 this.addItemBoxRemove("#importingBox");
 
-                var btnEle = document.querySelector("#btnEle");
+                var btnEle = this.$("#btnEle");
                 btnEle.parentNode.insertBefore(odiv,btnEle);
             },
 
             // “设置按钮” 透明度
             setBtnOpacityFun: function(){
                 if(~window.navigator.userAgent.indexOf("Chrome")){
-                    var odom = document.querySelector("#setBtnOpacityRange");
+                    var odom = this.$("#setBtnOpacityRange");
                     var odomV = odom.value;
                     // odom.style.backgroundSize = odom.value*100 +"% 100%";
                     console.log(odomV,getSettingData.setBtnOpacity);
                     if(getSettingData.setBtnOpacity<0){
-                        document.querySelector(".iqxin-setBtnOpacityRangeValue").innerHTML = odomV.toString().padEnd(4,"0");
+                        this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = odomV.toString().padEnd(4,"0");
                         odom.style.background = "-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, #fff";
                     }else{
-                        document.querySelector(".iqxin-setBtnOpacityRangeValue").innerHTML = "禁用";
+                        this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = "禁用";
                         odom.style.background = "-webkit-linear-gradient(left,#bdbdbd,#c6c7c7) no-repeat, #fff";
                     }
                     odom.style.backgroundSize = odom.value*100 +"% 100%";
@@ -4962,9 +4974,11 @@
 
                 //  点击更多菜单
                 if(targetid ==="moreSet"){
-                    document.querySelector("#btnEle2").classList.toggle("btnEle2active");
+                    var morePanel = this.$("#btnEle2");
+                    morePanel.classList.toggle("btnEle2active");
                     // iqxin-btn-active
-                    e.target.classList.toggle("iqxin-btn-active");
+                    e.target.classList.toggle("iqxin-btn-active", morePanel.classList.contains("btnEle2active"));
+                    this.windowResize();
                 }
 
                 // 点击导入菜单
@@ -5000,12 +5014,13 @@
                 this.addItemBoxRemove("#newSearchListBox"); // 添加新的搜索列表
                 this.boxClose("#iqxin-sortBox"); // 搜索列表排序
                 this.addItemBoxRemove("#importingBox"); //导入框
-                document.querySelector("#btnEle2").classList.remove("btnEle2active"); // 更多设置
+                this.$("#btnEle2").classList.remove("btnEle2active"); // 更多设置
+                this.$("#moreSet").classList.remove("iqxin-btn-active");
             },
 
             // 窗口位置拖动
             setDragNode: function(ele) {
-                var node = document.querySelector("#dragDom");
+                var node = this.$("#dragDom");
 
                 node.addEventListener("mousedown",function(event){
                     ele.style.transition = "null";
@@ -5070,7 +5085,7 @@
                 var pparentNode = that.parentNode;
 
                 // 防止跨区域移动
-                SEJsetting.prototype.domdropend();
+                this.domdropend();
                 if(dragEl.className != that.className){
                     console.log("移动对象 之前,现在: ", dragEl.className);
                     console.log(that.className);
@@ -5115,11 +5130,11 @@
                 }
 
                 // 重新绑定拖拽事件
-                SEJsetting.prototype.dragEvent();
+                this.dragEvent();
                 return false;
             },
             domdropend:function(){
-                var dom = document.querySelector(".drop-over");
+                var dom = this.$(".drop-over");
                 if(dom){
                     dom.classList.remove("drop-over")
                 }
@@ -5146,7 +5161,7 @@
 
             // 重新加载工具
             reloadSet: function(){
-                var elems = document.querySelectorAll('#sej-container, #settingLayerMask, sejspan.sej-drop-list');
+                var elems = document.querySelectorAll('#sej-container, #sej-setting-host, sejspan.sej-drop-list');
                 if (!elems) return;
                 console.log("elems: " + elems);
                 // return;
@@ -5161,11 +5176,11 @@
 
             // 设置按钮透明度设置
             rangeChange: function(bool){
-                var odom = document.querySelector("#setBtnOpacityRange");
+                var odom = this.$("#setBtnOpacityRange");
                 if(getSettingData.setBtnOpacity<0){
                     odom.style.background = "-webkit-linear-gradient(left,#bdbdbd,#c6c7c7) no-repeat, #fff";
                     odom.style.backgroundSize = odom.value*100 +"% 100%";
-                    document.querySelector(".iqxin-setBtnOpacityRangeValue").innerHTML = "禁用";
+                    this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = "禁用";
                     getSettingData.setBtnOpacity = -odom.value;
                 } else{
                     odom.style.background = "-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, #fff";
@@ -5179,7 +5194,7 @@
                     } else {
                         valueStr = odom.value.toString().padEnd(4,"0");
                     }
-                    document.querySelector(".iqxin-setBtnOpacityRangeValue").innerHTML = valueStr;
+                    this.$(".iqxin-setBtnOpacityRangeValue").innerHTML = valueStr;
                     getSettingData.setBtnOpacity = odom.value;
                 }
             },
@@ -5209,7 +5224,7 @@
                 this.addTitleEditBoxRemove(); //标题栏处于编辑状态
 
                 var obj = {};
-                var parentdiv = document.querySelectorAll("#settingLayer .iqxin-items");
+                var parentdiv = this.$$("#settingLayer .iqxin-items");
                 for (let i=0;i<parentdiv.length;i++){
                     var data = parentdiv[i].querySelectorAll(".sej-engine");
                     var id = parentdiv[i].id;
@@ -5240,7 +5255,7 @@
                 var engineDetails=[];
 
                 // 分类排序
-                var odetails = document.querySelectorAll(".sejtitle");
+                var odetails = this.$$(".sejtitle");
                 var odetailsLength = odetails.length;
                 for(let i=0;i<odetailsLength;i++){
                     debug(odetails[i]);
@@ -5251,22 +5266,22 @@
                 }
 
                 // 新标签页全局设置
-                var onewtab = document.querySelector("#iqxin-globalNewtab").selectedIndex;
-                var foldlist = document.querySelector("#iqxin-foldlist").checked;
+                var onewtab = this.$("#iqxin-globalNewtab").selectedIndex;
+                var foldlist = this.$("#iqxin-foldlist").checked;
 
                 // 以防不测,重新获取本地配置文件
                 var getData = GM_getValue("searchEngineJumpData");
                 getData.newtab = onewtab;
                 getData.foldlist = foldlist;
                 getData.setBtnOpacity = getSettingData.setBtnOpacity;
-                // getData.debug = document.querySelector("#iqxin-debug").checked;
-                getData.center = document.querySelector("#iqxin-center").selectedIndex;
-                getData.fixedTop = document.querySelector("#iqxin-fixedTop").checked;
-                getData.allOpen = document.querySelector("#iqxin-allOpen-item").checked;
-                getData.fixedTopUpward = document.querySelector("#iqxin-fixedTopUpward-item").checked;
-                getData.transtion = document.querySelector("#iqxin-transtion").checked;
-                getData.HideTheSameLink = document.querySelector("#iqxin-HideTheSameLink").checked;
-                getData.selectSearch = document.querySelector("#iqxin-selectSearch").checked;
+                // getData.debug = this.$("#iqxin-debug").checked;
+                getData.center = this.$("#iqxin-center").selectedIndex;
+                getData.fixedTop = this.$("#iqxin-fixedTop").checked;
+                getData.allOpen = this.$("#iqxin-allOpen-item").checked;
+                getData.fixedTopUpward = this.$("#iqxin-fixedTopUpward-item").checked;
+                getData.transtion = this.$("#iqxin-transtion").checked;
+                getData.HideTheSameLink = this.$("#iqxin-HideTheSameLink").checked;
+                getData.selectSearch = this.$("#iqxin-selectSearch").checked;
                 getData.engineDetails = engineDetails;
                 getData.engineList = obj;
 
@@ -5275,7 +5290,7 @@
             },
             // 此处的样式主要是设置界面
             addGlobalStyle: function(){
-                var head, style;
+                var style;
                 var css =
                     "#settingLayerMask{" +
                         "display: none;" +
@@ -5322,7 +5337,7 @@
                     "#settingLayerMask #settingLayer{" +
                         "display: flex;" +
                         "flex-wrap: wrap;" +
-                        "padding: 20px 20px 50px 20px;" +
+                        "padding: 20px;" +
                         "margin: 2% 25px 50px 5px;" +
                         "background-color: var(--background-setting-qxin);" +
                         "border-radius: 4px;" +
@@ -5405,13 +5420,17 @@
                     "}" +
                     "#settingLayerMask #btnEle2," +
                     "#settingLayerMask #btnEle{" +
-                        "position:absolute;" +
+                        "position:static;" +
                         "width:100%;" +
-                        "bottom: 0px;" +
-                        "left: 0;" +
-                        "right: 0;" +
+                        "flex:0 0 100%;" +
                         "background: var(--background-setting-qxin);" +
                         "border-radius: 4px;" +
+                    "}" +
+                    "#settingLayerMask #btnEle{" +
+                        "order:1000;" +
+                    "}" +
+                    "#settingLayerMask #btnEle2{" +
+                        "order:1001;" +
                     "}" +
                     "#settingLayerMask #btnEle2 span," +
                     "#settingLayerMask #btnEle span{" +
@@ -5471,15 +5490,17 @@
                         "border-radius: 4px;" +
                     "}" +
                     "#settingLayerMask #btnEle2{" +
+                        "display:none;" +
                         "visibility:hidden;" +
                         "opacity:0;" +
-                        "transform:translateY(calc(100% + 4px));" +
+                        "transform:none;" +
                         "transition : 0.3s;" +
                     "}" +
                     "#settingLayerMask #btnEle2.btnEle2active{" +
+                        "display:block;" +
                         "visibility:visible;" +
                         "opacity:1;" +
-                        "transform:translateY(calc(100% + 4px));" +
+                        "transform:none;" +
                     "}" +
                     "#settingLayerMask #moreSet.iqxin-btn-active," +
                     "#settingLayerMask #moreSet.iqxin-btn-active:hover{" +
@@ -5757,15 +5778,16 @@
                         "cursor:pointer;" +
                     "}" +
                     "";
-                head = document.getElementsByTagName('head')[0];
                 style = document.createElement('style');
                 style.type = 'text/css';
-                style.innerHTML = css;
-                head.appendChild(style);
+                style.textContent = css;
+                this.root.appendChild(style);
 
                 // 关闭设置菜单中的所有动画效果
                 if(!getSettingData.transtion){
-                    GM_addStyle("#settingLayerMask #settingLayer," +
+                    style = document.createElement('style');
+                    style.type = 'text/css';
+                    style.textContent = "#settingLayerMask #settingLayer," +
                         "#settingLayerMask #btnEle span," +
                         "#settingLayerMask #btnEle2," +
                         "#settingLayerMask .iqxin-set-del," +
@@ -5780,7 +5802,8 @@
                             "backdrop-filter:none;" +
                             // "background-color: rgba(0,0,0,.7);" +
                         "}"+
-                        "");
+                        "";
+                    this.root.appendChild(style);
                 }
             }
         };
@@ -5808,14 +5831,14 @@
         GM_registerMenuCommand("search jump 搜索跳转设置",setBtnStart);
 
         function setBtnStart(){
-            if(!document.querySelector("#settingLayerMask")){
+            if(!document.querySelector("#sej-setting-host")){
                 sejSet = new SEJsetting();
 
-                var sej_save = document.querySelector("#xin-save");
+                var sej_save = sejSet.$("#xin-save");
                 // var sej_close = document.querySelector("#xin-close");
                 // var sej_reset = document.querySelector("#xin-reset");
-                var sej_addDel = document.querySelector("#xin-addDel");
-                var sej_edit = document.querySelector("#xin-modification");
+                var sej_addDel = sejSet.$("#xin-addDel");
+                var sej_edit = sejSet.$("#xin-modification");
 
                 // sej_save.addEventListener("click",function(){sejSet.saveData();sejSet.hide();if(!getSettingData.debug)window.location.reload();});
                 sej_save.addEventListener("click",function(){sejSet.saveData();sejSet.hide();sejSet.reloadSet();});
