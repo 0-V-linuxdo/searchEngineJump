@@ -6,7 +6,7 @@
 // @version        [20260504] v1.1.2
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.2：修复 README 效果图不可见，补充仓库内预览图，并更新版本信息；
+// @update-log     v1.1.2：重写 fork README，修复暗色模式下拉菜单右侧透明亮色，并更新版本信息；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -3380,6 +3380,9 @@
                     --background-hover-color-qxin: #EAEAEA;
                     --trigger-shown-qxin: #DEEDFF !important;
                     --sej-drop-list-background-qxin:rgba(255,255,255,0.7);
+                    --sej-drop-list-border-qxin:rgba(0,0,0,0.08);
+                    --sej-drop-list-shadow-qxin:2px 2px 5px #999;
+                    --sej-drop-list-backdrop-qxin:blur(7px);
                     --background-btn-qxin:#EFF4F8;
                     --background-setting-qxin:#fff;
                 }
@@ -3392,6 +3395,9 @@
                     --background-hover-color-qxin: #EAEAEA;
                     --trigger-shown-qxin: #DEEDFF !important;
                     --sej-drop-list-background-qxin:rgba(255,255,255,0.7);
+                    --sej-drop-list-border-qxin:rgba(0,0,0,0.08);
+                    --sej-drop-list-shadow-qxin:2px 2px 5px #999;
+                    --sej-drop-list-backdrop-qxin:blur(7px);
                     --background-btn-qxin:#EFF4F8;
                     --background-setting-qxin:#fff;
                 }
@@ -3403,7 +3409,10 @@
                     --background-active-disable-qxin:#583535;
                     --background-hover-color-qxin: #424242;
                     --trigger-shown-qxin: #424242 !important;
-                    --sej-drop-list-background-qxin:rgba(0,0,0,0.7);
+                    --sej-drop-list-background-qxin:rgba(18,18,18,0.96);
+                    --sej-drop-list-border-qxin:rgba(255,255,255,0.08);
+                    --sej-drop-list-shadow-qxin:0 8px 24px rgba(0,0,0,0.55);
+                    --sej-drop-list-backdrop-qxin:none;
                     --background-btn-qxin:#292f36;
                     --background-setting-qxin:#202124;
                 }
@@ -3416,7 +3425,10 @@
                         --background-active-disable-qxin:#583535;
                         --background-hover-color-qxin: #424242;
                         --trigger-shown-qxin: #424242 !important;
-                        --sej-drop-list-background-qxin:rgba(0,0,0,0.7);
+                        --sej-drop-list-background-qxin:rgba(18,18,18,0.96);
+                        --sej-drop-list-border-qxin:rgba(255,255,255,0.08);
+                        --sej-drop-list-shadow-qxin:0 8px 24px rgba(0,0,0,0.55);
+                        --sej-drop-list-backdrop-qxin:none;
                         --background-btn-qxin:#292f36;
                         --background-setting-qxin:#202124;
                     }
@@ -3523,12 +3535,15 @@
                     padding: 5px 0;
                     text-align: left;
                     font-size: 13px;
-                    -moz-box-shadow: 1px 1px 5px #999;
-                    -webkit-box-shadow: 2px 2px 5px #999;
-                    box-shadow: 2px 2px 5px #999;
+                    -moz-box-shadow: var(--sej-drop-list-shadow-qxin);
+                    -webkit-box-shadow: var(--sej-drop-list-shadow-qxin);
+                    box-shadow: var(--sej-drop-list-shadow-qxin);
                     // background-color: rgba(255,255,255,.7);
                     background-color: var(--sej-drop-list-background-qxin);
-                    backdrop-filter: blur(7px);
+                    border: 1px solid var(--sej-drop-list-border-qxin);
+                    overflow: hidden;
+                    backdrop-filter: var(--sej-drop-list-backdrop-qxin);
+                    -webkit-backdrop-filter: var(--sej-drop-list-backdrop-qxin);
                     border-bottom-right-radius: 3px;
                     border-bottom-left-radius: 3px;
                     transition: opacity 0.2s ease-in-out,
