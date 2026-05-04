@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.0.0
+// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.0
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
-// @version        5.26.11
+// @version        1.1.0
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
+// @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；加固设置弹窗内部样式作用域，恢复按钮区、复选框、透明度滑块显示；
 // @update-log     v1.0.0：同步原项目 qxinGitHub/searchEngineJump 5.26.11；保留 YouTube 新UI、bilibili、Kagi 搜索适配，并排除 YouTube 视频页；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
@@ -5298,7 +5299,28 @@
                         "box-sizing: border-box;" +
                         "color: var(--font-color-qxin);" +
                     "}" +
-                    "#settingLayer{" +
+                    "#settingLayerMask," +
+                    "#settingLayerMask *," +
+                    "#settingLayerMask *::before," +
+                    "#settingLayerMask *::after{" +
+                        "box-sizing: border-box;" +
+                    "}" +
+                    "#settingLayerMask *{" +
+                        "font-family: arial,sans-serif;" +
+                        "letter-spacing: normal;" +
+                    "}" +
+                    "#settingLayerMask input," +
+                    "#settingLayerMask select," +
+                    "#settingLayerMask button," +
+                    "#settingLayerMask textarea{" +
+                        "font:inherit;" +
+                        "line-height:normal;" +
+                        "letter-spacing:normal;" +
+                        "text-transform:none;" +
+                        "opacity:1;" +
+                        "box-shadow:none;" +
+                    "}" +
+                    "#settingLayerMask #settingLayer{" +
                         "display: flex;" +
                         "flex-wrap: wrap;" +
                         "padding: 20px 20px 50px 20px;" +
@@ -5308,9 +5330,12 @@
                         "position: absolute;" +
                         "min-width: 700px;" +
                         "max-width: 94%;" +
+                        "font-size:16px;" +
+                        "line-height:1.5;" +
+                        "color: var(--font-color-qxin);" +
                         "transition:0.5s;" +
                     "}" +
-                    ".iqxin-items{" +
+                    "#settingLayerMask .iqxin-items{" +
                         "min-width:5em;" +
                         "margin: 0 5px 0px;" +
                     "}" +
@@ -5323,12 +5348,12 @@
                         "width: 100%;" +
                         "box-sizing: border-box;" +
                     "}" +
-                    ".iqxin-pointer-events," +
-                    ".sej-engine-icon," +
+                    "#settingLayerMask .iqxin-pointer-events," +
+                    "#settingLayerMask .sej-engine-icon," +
                     "#settingLayer .sej-engine *{" +
                         "pointer-events:none;" +
                     "}" +
-                    ".sejtitle{" +
+                    "#settingLayerMask .sejtitle{" +
                         "text-align: center;" +
                         "padding: 2px 0;" +
                         "cursor: pointer;" +
@@ -5344,104 +5369,142 @@
                         "border-radius:4px;" +
                         "line-height: 1em;" +
                     "}" +
-                    ".sejcon [data-xin]{"+
+                    "#settingLayerMask .sejcon [data-xin]{"+
                         "cursor: pointer;" +
                     "}" +
                     "#settingLayerMask [data-iqxindisabled='true']," +
-                    "[data-xin^='-']{" +
+                    "#settingLayerMask [data-xin^='-']{" +
                         "background-color: var(--background-avtive-color-qxin);" +
                         "text-decoration: line-through;" +
                         "text-decoration-color:red;" +
                         "border-radius:2px;" +
                         "transition:.3s;" +
                     "}" +
-                    ".sejtitle:not([data-xin^='-']):hover{" +
+                    "#settingLayerMask .sejtitle:not([data-xin^='-']):hover{" +
                         "background:var(--background-active-enable-qxin);" +
                     "}" +
                     "#settingLayerMask .sej-engine:hover{" +
                         "background-color: var(--background-active-enable-qxin);" +
                     "}" +
                     "#settingLayerMask [data-iqxindisabled='true']:hover," +
-                    "[data-xin^='-']:hover{" +
+                    "#settingLayerMask [data-xin^='-']:hover{" +
                         "background-color: var(--background-active-disable-qxin);" +
                     "}" +
                     "#settingLayerMask label{" +
+                        "display:inline-flex;" +
+                        "align-items:center;" +
+                        "gap:5px;" +
+                        "margin:0;" +
+                        "padding:0;" +
+                        "font:inherit;" +
+                        "line-height:1.2;" +
+                        "white-space:nowrap;" +
                         "cursor:pointer;" +
                     "}" +
                     "#settingLayerMask .sej-engine-icon{" +
                         "vertical-align:middle;" +
                     "}" +
-                    "#btnEle2," +
-                    "#btnEle{" +
+                    "#settingLayerMask #btnEle2," +
+                    "#settingLayerMask #btnEle{" +
                         "position:absolute;" +
                         "width:100%;" +
                         "bottom: 0px;" +
+                        "left: 0;" +
                         "right: 0;" +
                         "background: var(--background-setting-qxin);" +
                         "border-radius: 4px;" +
                     "}" +
-                    "#btnEle2 span," +
-                    "#btnEle span{" +
-                        "display: inline-block;" +
+                    "#settingLayerMask #btnEle2 span," +
+                    "#settingLayerMask #btnEle span{" +
+                        "display: inline-flex;" +
+                        "align-items:center;" +
+                        "justify-content:center;" +
                         "background: var(--background-btn-qxin);" +
                         "border: 1px solid #3abdc1;" +
-                        "margin: 12px auto 10px;" +
+                        "margin: 8px 0;" +
                         "color: #3abdc1;" +
                         "padding: 5px 10px;" +
+                        "min-height:42px;" +
+                        "font-size:16px;" +
+                        "font-weight:400;" +
+                        "line-height:1.2;" +
+                        "text-align:center;" +
+                        "white-space:nowrap;" +
+                        "vertical-align:middle;" +
+                        "opacity:1;" +
                         "border-radius: 4px;" +
                         "cursor: pointer;" +
                         "outline: none;" +
                         "transition: 0.3s;" +
                     "}" +
-                    "#btnEle a{" +
+                    "#settingLayerMask #btnEle a{" +
                         "color: #999;" +
                         "text-decoration: none;" +
                         "font-family: auto;" +
                     "}" +
-                    "#btnEle a:hover{" +
+                    "#settingLayerMask #btnEle a:hover{" +
                         "text-decoration: underline;" +
                         "color: #ef8957;" +
                     "}" +
-                    "#btnEle2 span.feedback:hover," +
-                    "#btnEle span.feedback:hover{" +
+                    "#settingLayerMask #btnEle2 span.feedback:hover," +
+                    "#settingLayerMask #btnEle span.feedback:hover{" +
                         "border-color:#ef8957;" +
                     "}" +
-                    "#btnEle2 span:not(.feedback):hover," +
-                    "#btnEle span:not(.feedback):hover{" +
+                    "#settingLayerMask #btnEle2 span:not(.feedback):hover," +
+                    "#settingLayerMask #btnEle span:not(.feedback):hover{" +
                         "background:#3ACBDD;" +
                         "color:#fff;" +
                     "}" +
-                    "#btnEle .feedback{" +
+                    "#settingLayerMask #btnEle .feedback{" +
                         "border-color: #aaa;" +
                     "}" +
-                    "#btnEle2>div," +
-                    "#btnEle>div{" +
+                    "#settingLayerMask #btnEle2>div," +
+                    "#settingLayerMask #btnEle>div{" +
                         "width: 100%;" +
                         "display:flex;" +
+                        "flex-wrap:wrap;" +
+                        "align-items:center;" +
                         "justify-content: space-around;" +
+                        "gap:8px 10px;" +
+                        "min-height:58px;" +
+                        "padding:0 10px;" +
                         "background: var(--background-btn-qxin);" +
                         "border-radius: 4px;" +
                     "}" +
-                    "#btnEle2{" +
+                    "#settingLayerMask #btnEle2{" +
                         "visibility:hidden;" +
                         "opacity:0;" +
-                        "transform:translate(0,40px);" +
+                        "transform:translateY(calc(100% + 4px));" +
                         "transition : 0.3s;" +
                     "}" +
-                    "#btnEle2.btnEle2active{" +
+                    "#settingLayerMask #btnEle2.btnEle2active{" +
                         "visibility:visible;" +
                         "opacity:1;" +
-                        // "transform:translate(0,108px);"  // 两行的情况下
-                        "transform:translate(0,53px);" +
+                        "transform:translateY(calc(100% + 4px));" +
+                    "}" +
+                    "#settingLayerMask #moreSet.iqxin-btn-active," +
+                    "#settingLayerMask #moreSet.iqxin-btn-active:hover{" +
+                        "background: var(--background-btn-qxin);" +
+                        "color:red;" +
+                        "border-color:red;" +
                     "}" +
                     "#settingLayerMask input[type=checkbox]{" +
                         "width: 12px;" +
                         "height: 12px;" +
                         "display: inline-block;" +
+                        "flex:0 0 auto;" +
                         "text-align: center;" +
                         "vertical-align: middle;" +
                         "line-height: 10px!important;" +
-                        "margin: 0 5px 5px 5px!important;" +
+                        "margin: 0 0 0 0!important;" +
+                        "padding:0;" +
+                        "appearance:none;" +
+                        "-moz-appearance:none;" +
+                        "-webkit-appearance:none;" +
+                        "background:transparent;" +
+                        "border:none;" +
+                        "border-radius:0;" +
+                        "opacity:1;" +
                         "position: relative;" +
                     "}" +
                     "#settingLayerMask input[type=checkbox]:before{" +
@@ -5453,9 +5516,13 @@
                         "width: 100%;" +
                         "height: 100%;" +
                         "border: 1px solid #d9d9d9;" +
+                        "box-sizing:border-box;" +
                     "}" +
                     "#settingLayerMask input[type=checkbox]:checked:after{" +
                         'content: "✔";' +
+                        "display:flex;" +
+                        "align-items:center;" +
+                        "justify-content:center;" +
                         "background-color: #63d4d8;" +
                         "position: absolute;" +
                         "top: 0;" +
@@ -5465,14 +5532,16 @@
                         "border: 1px solid #63d4d8;" +
                         "color: #fff;" +
                         "font-size: 10px;" +
+                        "line-height:12px;" +
+                        "box-sizing:border-box;" +
                     "}" +
-                    ".drop-over{" +
+                    "#settingLayerMask .drop-over{" +
                         "opacity: 0.6;" +
                     "}" +
-                    ".iqxin-title-edit," +
-                    ".iqxin-set-edit," +
-                    ".iqxin-set-title-del," +
-                    ".iqxin-set-del {" +
+                    "#settingLayerMask .iqxin-title-edit," +
+                    "#settingLayerMask .iqxin-set-edit," +
+                    "#settingLayerMask .iqxin-set-title-del," +
+                    "#settingLayerMask .iqxin-set-del {" +
                         "visibility: hidden;" +
                         "opacity:0;" +
                         "position: absolute;" +
@@ -5486,14 +5555,14 @@
                         "cursor: pointer;" +
                         "transition: .3s;" +
                     "}" +
-                    ".iqxin-set-title-del.iqxin-set-active {" +
+                    "#settingLayerMask .iqxin-set-title-del.iqxin-set-active {" +
                         "background: #fff;" +
                         "border-radius: 50% 0 0 50%;" +
                     "}" +
-                    ".iqxin-title-edit{" +
+                    "#settingLayerMask .iqxin-title-edit{" +
                         "padding: 0px 3px 6px 6px;" +
                     "}" +
-                    "span.iqxin-additem {" +
+                    "#settingLayerMask span.iqxin-additem {" +
                         "display: inline-block;" +
                         "text-align: center;" +
                         "width: 100%;" +
@@ -5506,7 +5575,7 @@
                         "transition:0.3s;" +
                         "transform:scale(0);" +
                     "}" +
-                    "span.iqxin-additem.iqxin-set-active {" +
+                    "#settingLayerMask span.iqxin-additem.iqxin-set-active {" +
                         "visibility:visible;" +
                         "opacity:1;" +
                         "margin:10px 0;" +
@@ -5517,19 +5586,19 @@
                         "visibility:visible;" +
                         "opacity:0.8;" +
                     "}" +
-                    "#nSearchList.iqxin-set-active," +
-                    ".iqxin-set-edit.iqxin-set-active," +
-                    ".iqxin-set-title-del.iqxin-set-active," +
-                    ".iqxin-set-del.iqxin-set-active {" +
+                    "#settingLayerMask #nSearchList.iqxin-set-active," +
+                    "#settingLayerMask .iqxin-set-edit.iqxin-set-active," +
+                    "#settingLayerMask .iqxin-set-title-del.iqxin-set-active," +
+                    "#settingLayerMask .iqxin-set-del.iqxin-set-active {" +
                         "visibility:visible !important;" +
                         "opacity:1 !important;" +
                     "}" +
-                    "#btnEle span.iqxin-btn-active{" +
+                    "#settingLayerMask #btnEle span.iqxin-btn-active{" +
                         "color:red;" +
                         "border-color:red;" +
                     "}" +
-                    "#newSearchListBox," +
-                    "#newSearchBox{" +
+                    "#settingLayerMask #newSearchListBox," +
+                    "#settingLayerMask #newSearchBox{" +
                         "transition:0.3s;" +
                         "transform : translateY(0%);" +
                         "opacity: 1;" +
@@ -5543,19 +5612,19 @@
                         "color: #e8e8e8;" +
                         "margin: -149px -117px;" +
                     "}" +
-                    "#newSearchListBox input," +
-                    "#newSearchBox input{" +
+                    "#settingLayerMask #newSearchListBox input," +
+                    "#settingLayerMask #newSearchBox input{" +
                         "border: none;" +
                         "padding: 4px 0 4px 5px;" +
                         "border-radius: 4px;" +
                         "outline: none;" +
                     "}" +
-                    "#newSearchListBox input:focus," +
-                    "#newSearchBox input:focus {" +
+                    "#settingLayerMask #newSearchListBox input:focus," +
+                    "#settingLayerMask #newSearchBox input:focus {" +
                         "background: #f1d2d2;" +
                         "transition: 0.5s;" +
                     "}" +
-                    ".addItemBoxBtn{" +
+                    "#settingLayerMask .addItemBoxBtn{" +
                         "cursor: pointer;" +
                         "background: #fff;" +
                         "border: none;" +
@@ -5564,8 +5633,8 @@
                         "color: #333;" +
                         "transition:0.3s;" +
                     "}" +
-                    "#xin-centerDisplay select," +
-                    "#xin-newtab select{" +
+                    "#settingLayerMask #xin-centerDisplay select," +
+                    "#settingLayerMask #xin-newtab select{" +
                         "height:auto;" +
                         "border: none;" +
                         "outline: none;" +
@@ -5580,30 +5649,30 @@
                         "text-decoration: underline;" +
                         "background: var(--background-btn-qxin);" +
                     "}" +
-                    "#titleEdit{" +
+                    "#settingLayerMask #titleEdit{" +
                         "width:6em;" +
                     "}" +
                     // 按钮效果 ： 确定 取消按钮
-                    ".iqxin-closeBtn," +
-                    ".iqxin-enterBtn{" +
+                    "#settingLayerMask .iqxin-closeBtn," +
+                    "#settingLayerMask .iqxin-enterBtn{" +
                         "box-sizing: border-box;" +
                     "}" +
-                    ".iqxin-closeBtn:hover{" +
+                    "#settingLayerMask .iqxin-closeBtn:hover{" +
                         "background: #ff6565;" +
                         "border-color: #ff6565;" +
                         "color: #fff;" +
                     "}" +
-                    ".iqxin-enterBtn:hover{" +
+                    "#settingLayerMask .iqxin-enterBtn:hover{" +
                         "background: #84bb84;" +
                          "border-color: #84bb84;" +
                          "color: #fff;" +
                     "}" +
-                    "#iqxin-editCodeBox button{" +
+                    "#settingLayerMask #iqxin-editCodeBox button{" +
                         "cursor:pointer;" +
                     "}" +
 
                     // 关闭按钮
-                    "#xin-close{" +
+                    "#settingLayerMask #xin-close{" +
                         "background:white;" +
                         "color:#3ABDC1;" +
                         "line-height:20px;" +
@@ -5621,31 +5690,38 @@
                         "position: absolute;" +
                         "box-sizing: unset;" +
                     "}" +
-                    "#xin-close::before{" +
+                    "#settingLayerMask #xin-close::before{" +
                         "content:'\\2716';" +
                         "margin:-10px;" +
                     "}" +
-                    "#xin-close:hover{" +
+                    "#settingLayerMask #xin-close:hover{" +
                         "background: indianred;" +
                         "border-color: indianred;" +
                         "color: #fff;" +
                     "}" +
                     // type[range] 效果
-                    "input[type=range] {" +
+                    "#settingLayerMask #setBtnOpacityRange{" +
                         "outline: none;" +
                         "-webkit-appearance: none;" +
+                        "appearance: none;" +
+                        "width:190px;" +
+                        "height:18px;" +
+                        "margin:0 8px;" +
+                        "padding:0;" +
+                        "vertical-align:middle;" +
+                        "opacity:1;" +
                         "background:-webkit-linear-gradient(left,#3ABDC1,#83e7ea) no-repeat, #fff;" +
                         "border-radius: 10px; /*这个属性设置使填充进度条时的图形为圆角*/" +
                     "}" +
-                    "input[type=range]::-webkit-slider-thumb {" +
+                    "#settingLayerMask #setBtnOpacityRange::-webkit-slider-thumb{" +
                         "-webkit-appearance: none;" +
                     "} " +
-                    "input[type=range]::-webkit-slider-runnable-track {" +
+                    "#settingLayerMask #setBtnOpacityRange::-webkit-slider-runnable-track{" +
                         "height: 10px;" +
                         "border-radius: 10px; /*将轨道设为圆角的*/" +
                         "box-shadow: 0 1px 1px #def3f8, inset 0 .125em .125em #0d1112; /*轨道内置阴影效果*/" +
                     "}" +
-                    "input[type=range]::-webkit-slider-thumb {" +
+                    "#settingLayerMask #setBtnOpacityRange::-webkit-slider-thumb{" +
                         "-webkit-appearance: none;" +
                         "height: 18px;" +
                         "width: 18px;" +
@@ -5656,7 +5732,7 @@
                         "box-shadow: 0 .125em .125em #3b4547; /*添加底部阴影*/" +
                     "}" +
                     // 导入
-                    "#importingBox{" +
+                    "#settingLayerMask #importingBox{" +
                         "position:fixed;" +
                         "width:350px;" +
                         "top:50%;" +
@@ -5667,18 +5743,18 @@
                         "background:#1D1D1D;" +
                         "color:#fff;" +
                     "}" +
-                    "#importingBox li{" +
+                    "#settingLayerMask #importingBox li{" +
                         "margin:5px;" +
                         "border-bottom:1px solid #3ACBDD;" +
                     "}" +
-                    "#importingBox li p{" +
+                    "#settingLayerMask #importingBox li p{" +
                         "white-space: nowrap;" +
                         "overflow: hidden;" +
                         "text-overflow: ellipsis;" +
                         "margin-top:0;" +
                         "margin-bottom:0;" +
                     "}" +
-                    ".xin-importing-item{" +
+                    "#settingLayerMask .xin-importing-item{" +
                         "cursor:pointer;" +
                     "}" +
                     "";
@@ -5690,14 +5766,14 @@
 
                 // 关闭设置菜单中的所有动画效果
                 if(!getSettingData.transtion){
-                    GM_addStyle("#settingLayer," +
-                        "#btnEle span," +
-                        "#btnEle2," +
-                        ".iqxin-set-del," +
-                        "span.iqxin-additem," +
-                        "#newSearchBox," +
-                        ".addItemBoxBtn," +
-                        "#xin-close," +
+                    GM_addStyle("#settingLayerMask #settingLayer," +
+                        "#settingLayerMask #btnEle span," +
+                        "#settingLayerMask #btnEle2," +
+                        "#settingLayerMask .iqxin-set-del," +
+                        "#settingLayerMask span.iqxin-additem," +
+                        "#settingLayerMask #newSearchBox," +
+                        "#settingLayerMask .addItemBoxBtn," +
+                        "#settingLayerMask #xin-close," +
                         "#settingLayerMask{" +
                             "transition:none;"+
                         "}"+
