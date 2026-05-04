@@ -6,7 +6,7 @@
 // @version        [20260504] v1.1.2
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
-// @update-log     v1.1.2：重写 fork README，修复暗色模式下拉菜单右侧透明亮色，并更新版本信息；
+// @update-log     v1.1.2：README 改为 fork 修改概览，暗色下拉菜单改为不透明背景，并更新版本信息；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -1922,7 +1922,7 @@
                         --background-active-disable-qxin:#583535;
                         --background-hover-color-qxin: #424242;
                         --trigger-shown-qxin: #424242 !important;
-                        --sej-drop-list-background-qxin:rgba(0,0,0,0.7);
+                        --sej-drop-list-background-qxin:#121212;
                         --background-btn-qxin:#292f36;
                         --background-setting-qxin: #161722;
                     }
@@ -3409,7 +3409,7 @@
                     --background-active-disable-qxin:#583535;
                     --background-hover-color-qxin: #424242;
                     --trigger-shown-qxin: #424242 !important;
-                    --sej-drop-list-background-qxin:rgba(18,18,18,0.96);
+                    --sej-drop-list-background-qxin:#121212;
                     --sej-drop-list-border-qxin:rgba(255,255,255,0.08);
                     --sej-drop-list-shadow-qxin:0 8px 24px rgba(0,0,0,0.55);
                     --sej-drop-list-backdrop-qxin:none;
@@ -3425,7 +3425,7 @@
                         --background-active-disable-qxin:#583535;
                         --background-hover-color-qxin: #424242;
                         --trigger-shown-qxin: #424242 !important;
-                        --sej-drop-list-background-qxin:rgba(18,18,18,0.96);
+                        --sej-drop-list-background-qxin:#121212;
                         --sej-drop-list-border-qxin:rgba(255,255,255,0.08);
                         --sej-drop-list-shadow-qxin:0 8px 24px rgba(0,0,0,0.55);
                         --sej-drop-list-backdrop-qxin:none;
@@ -3501,6 +3501,9 @@
                 .sej-engine:hover {
                     background-color: var(--background-hover-color-qxin);
                     text-decoration: none;
+                }
+                .sej-drop-list-trigger-shown {
+                    background-color: var(--trigger-shown-qxin);
                 }
                 .sej-drop-list > .sej-engine:hover {
                     // background-color: #DEEDFF;
@@ -3765,7 +3768,7 @@
                             var style = list.style;
                             style.top = parseInt(list.style.top) -6 +"px";
                             style.zIndex = DropDownList.zIndex ++;
-                            style.opacity = 0.96;
+                            style.opacity = 1;
                         };
                     });
 
@@ -3787,7 +3790,7 @@
 
                         var style = list.style;
                         style.zIndex = DropDownList.zIndex ++;
-                        style.opacity = 0.96;
+                        style.opacity = 1;
                         style.top = parseInt(list.style.top) -6 +"px";
                     });
 
@@ -3834,7 +3837,7 @@
                     style.left = left- (this.list.getBoundingClientRect().width - aBCRect.width)/2 + "px";
 
                     setTimeout(function () {
-                        style.opacity = 0.96;
+                        style.opacity = 1;
                         style.top = top + 'px';
                     }, 30);
                     this.a.classList.add(this.aShownClass);
