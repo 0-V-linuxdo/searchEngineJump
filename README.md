@@ -1,6 +1,6 @@
 # searchEngineJump fork
 
-本 fork 从原项目 `qxinGitHub/searchEngineJump` 的 `5.26.11` 版本开始修改。
+本 fork 基于原项目 `qxinGitHub/searchEngineJump` 的 `5.26.11` 版本进行修改。
 
 ## 相对原分支的修改
 
