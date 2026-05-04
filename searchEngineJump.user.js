@@ -7,7 +7,6 @@
 // @created        2011-07-02
 // @lastUpdated    2026-05-04
 // @update-log     v1.1.0：修复 Kagi.com 设置弹窗布局/样式污染问题；加固设置弹窗内部样式作用域，恢复按钮区、复选框、透明度滑块显示；
-// @update-log     v1.0.0：同步原项目 qxinGitHub/searchEngineJump 5.26.11；保留 YouTube 新UI、bilibili、Kagi 搜索适配，并排除 YouTube 视频页；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
@@ -18,16 +17,16 @@
 // @match          *://**/*
 // @exclude        *://mega.nz/*
 
-// @grant       GM_getValue
-// @grant       GM_setValue
-// @grant       GM_addStyle
-// @grant       GM_deleteValue
-// @grant       GM_setClipboard
-// @grant       GM_registerMenuCommand
-// @grant       GM_openInTab
-// @grant       GM_xmlhttpRequest
+// @grant          GM_getValue
+// @grant          GM_setValue
+// @grant          GM_addStyle
+// @grant          GM_deleteValue
+// @grant          GM_setClipboard
+// @grant          GM_registerMenuCommand
+// @grant          GM_openInTab
+// @grant          GM_xmlhttpRequest
 
-// @run-at      document-end
+// @run-at         document-end
 // ==/UserScript==
 
 (function () {
