@@ -1,10 +1,10 @@
 export const userscriptMeta = `// ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.1.4
+// @name           searchEngineJump 搜索引擎快捷跳转 [20260505] v1.0.0
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
-// @version        [20260504] v1.1.4
-// @update-log     v1.1.4：源码升级为 ESM 模块，内置 toGBK，移除远程 @require 依赖；
+// @version        [20260505] v1.0.0
+// @update-log     [20260505] v1.0.0：发布 ESM 源码结构版本，内置 toGBK，移除远程 @require 依赖；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
