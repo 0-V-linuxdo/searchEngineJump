@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           searchEngineJump 搜索引擎快捷跳转 [20251107] v1.0.3
+// @name           searchEngineJump 搜索引擎快捷跳转 [20260504] v1.0.0
 // @author         NLF&锐经(修改) & iqxin(修改)
 // @contributor    iqxin
 // @description    方便的在各个搜索引擎之间跳转,增加可视化设置菜单,能更友好的自定义设置,修复百度搜索样式丢失的问题
 // @version        5.26.11
 // @created        2011-07-02
-// @lastUpdated    2026-04-19
-// @update-log     1.0.0：适配 YouTube 新UI；1.0.1：适配 bilibili 所有搜索结果页；1.0.2：适配 Kagi 搜索；1.0.3：排除 YouTube 视频页；
+// @lastUpdated    2026-05-04
+// @update-log     v1.0.0：同步原项目 qxinGitHub/searchEngineJump 5.26.11；保留 YouTube 新UI、bilibili、Kagi 搜索适配，并排除 YouTube 视频页；
 
 // @namespace      https://greasyfork.org/zh-CN/scripts/27752-searchenginejump
 // @homepage       https://github.com/qxinGitHub/searchEngineJump
